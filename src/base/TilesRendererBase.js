@@ -382,7 +382,7 @@ export class TilesRendererBase {
 	}
 
 	fetchRootTileSet(url, fetchOptions, parent = null) {
-		const rootJson = this.cachedRootJson;
+		const json = this.cachedRootJson;
 		const version = json.asset.version;
 		const [ major, minor ] = version.split( '.' ).map( v => parseInt( v ) );
 		console.assert(
