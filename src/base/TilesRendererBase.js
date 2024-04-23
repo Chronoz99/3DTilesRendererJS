@@ -82,6 +82,7 @@ export class TilesRendererBase {
 		this.tileSets = {};
 		this.rootURL = url;
 		this.fetchOptions = {};
+		this.cachedRootJson = {};
 
 		this.preprocessURL = null;
 
@@ -380,13 +381,37 @@ export class TilesRendererBase {
 
 	}
 
+	fetchRootTileSet(url, fetchOptions, parent = null) {
+		const rootJson = this.cachedRootJson;
+		const version = json.asset.version;
+		const [ major, minor ] = version.split( '.' ).map( v => parseInt( v ) );
+		console.assert(
+			major <= 1,
+			'TilesRenderer: asset.version is expected to be a 1.x or a compatible version.',
+		);
+
+		if ( major === 1 && minor > 0 ) {
+
+			console.warn( 'TilesRenderer: tiles versions at 1.1 or higher have limited support. Some new extensions and features may not be supported.' );
+
+		}
+
+		// remove trailing slash and last path-segment from the URL
+		let basePath = url.replace( /\/[^\/]*\/?$/, '' );
+		basePath = new URL( basePath, window.location.href ).toString();
+		this.preprocessNode( json.root, basePath, parent );
+
+		return json;
+	}
+
+
 	loadRootTileSet( url ) {
 
 		const tileSets = this.tileSets;
 		if ( ! ( url in tileSets ) ) {
 
 			const pr = this
-				.fetchTileSet( this.preprocessURL ? this.preprocessURL( url ) : url, this.fetchOptions )
+				.fetchRootTileSet( this.preprocessURL ? this.preprocessURL( url ) : url, this.fetchOptions )
 				.then( json => {
 
 					tileSets[ url ] = json;
