@@ -274,6 +274,7 @@ export class TilesRendererBase {
 		}
 
 		tile.__basePath = tileSetDir;
+		console.log("tile", tile);
 
 	}
 
@@ -381,8 +382,9 @@ export class TilesRendererBase {
 
 	}
 
-	fetchRootTileSet(url, fetchOptions, parent = null) {
+	async fetchRootTileSet(url, fetchOptions, parent = null) {
 		const json = this.cachedRootJson;
+		console.log("this.cachedRootJson",this.cachedRootJson)
 		const version = json.asset.version;
 		const [ major, minor ] = version.split( '.' ).map( v => parseInt( v ) );
 		console.assert(
@@ -400,7 +402,7 @@ export class TilesRendererBase {
 		let basePath = url.replace( /\/[^\/]*\/?$/, '' );
 		basePath = new URL( basePath, window.location.href ).toString();
 		this.preprocessNode( json.root, basePath, parent );
-
+		console.log('json')
 		return json;
 	}
 
