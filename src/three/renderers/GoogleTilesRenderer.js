@@ -16,9 +16,9 @@ const GoogleTilesRendererMixin = base => class extends base {
 
 	}
 
-	constructor( apiKey, baseUrl = TILE_URL ) {
+	constructor( apiKey, baseUrl = TILE_URL, cachedJson = null ) {
 
-		super( new URL( `${ baseUrl }?key=${ apiKey }` ).toString() );
+		super( new URL( `${ baseUrl }?key=${ apiKey }` ).toString(), cachedJson );
 
 		this._credits = new GoogleMapsTilesCredits();
 
