@@ -84,6 +84,87 @@ export class GoogleCloudAuthPlugin {
 
 	}
 
+	loadRootTileset() {
+
+		const tiles = this.tiles;
+
+		// If cachedRootJson is provided, skip fetching and use the cached data
+		if ( tiles.cachedRootJson ) {
+
+			console.log( 'GoogleCloudAuthPlugin: Using cachedRootJson, skipping fetch' );
+
+			// Process the cached JSON to extract session info if present
+			this._processResponse( tiles.cachedRootJson );
+
+			// Chain to the next plugin or base implementation
+			return tiles.invokeOnePlugin( plugin => plugin !== this && plugin.loadRootTileset && plugin.loadRootTileset() );
+
+		}
+
+		// initialize href to resolve the root in case it's specified as a relative url
+		let url = new URL( tiles.rootURL, location.href );
+		tiles.invokeAllPlugins( plugin => url = plugin.preprocessURL ? plugin.preprocessURL( url, null ) : url );
+
+		return tiles
+			.invokeOnePlugin( plugin => plugin.fetchData && plugin.fetchData( url, tiles.fetchOptions ) )
+			.then( res => res.json() )
+			.then( json => {
+
+				this._processResponse( json );
+
+				// chain to the next plugin or base implementation
+				return tiles.invokeOnePlugin( plugin => plugin !== this && plugin.loadRootTileset && plugin.loadRootTileset() );
+
+			} );
+
+	}
+
+	_processResponse( json ) {
+
+		// Extract the session token from the root JSON if not already set
+		// The auth.fetch method normally does this, but when using cachedRootJson
+		// we need to do it manually
+		if ( this.auth.sessionToken === null && json ) {
+
+			// Extract session token from the tile URIs (same logic as GoogleCloudAuth)
+			const root = json.root;
+			if ( root ) {
+
+				const findSession = ( tile ) => {
+
+					if ( tile.content && tile.content.uri ) {
+
+						const [ , params ] = tile.content.uri.split( '?' );
+						return new URLSearchParams( params ).get( 'session' );
+
+					}
+					if ( tile.children ) {
+
+						for ( const child of tile.children ) {
+
+							const session = findSession( child );
+							if ( session ) return session;
+
+						}
+
+					}
+					return null;
+
+				};
+
+				this.auth.sessionToken = findSession( root );
+
+			} else if ( json.session ) {
+
+				// 2D maps API format
+				this.auth.sessionToken = json.session;
+
+			}
+
+		}
+
+	}
+
 	getAttributions( target ) {
 
 		if ( this.tiles.visibleTiles.size > 0 ) {
