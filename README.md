@@ -5,46 +5,63 @@
 
 ![](./images/header-mars.png)
 
-Three.js renderer implementation for the [3D Tiles format](https://github.com/AnalyticalGraphicsInc/3d-tiles/blob/master/specification/). The renderer supports most of the 3D Tiles spec features with a few exceptions. See [Issue #15](https://github.com/NASA-AMMOS/3DTilesRendererJS/issues/15) for information on which features are not yet implemented.
+Three.js renderer implementation for the [3D Tiles format](https://github.com/AnalyticalGraphicsInc/3d-tiles/blob/master/specification/). The renderer supports most of the 3D Tiles spec features with a few exceptions. For a list of available data sets and generation tools see the [3d Tiles resources](https://github.com/CesiumGS/3d-tiles/blob/main/RESOURCES.md) list.
 
-If a tile set or geometry does not load or render properly please make an issue! Example data is needed for adding and testing features.
+If a tileset or geometry does not load or render properly please make an issue! Example data is needed for adding and testing features. See the [Feature Complete Milestone](https://github.com/NASA-AMMOS/3DTilesRendererJS/milestone/1) for information on which features are not yet implemented.
 
 **Examples**
 
-[Dingo Gap Mars dataset with multiple tile sets](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/mars.html)
+[Dingo Gap Mars dataset with multiple tilesets](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/mars.html)
 
-[Kitchen sink example with all options here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/index.html)
+[Kitchen sink example with all options here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/index.html)
 
-[Rendering in VR example here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/vr.html)
+[Rendering in VR example here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/vr.html)
 
 **External Tiles Providers**
 
 _Personal [Google Tiles API Key](https://developers.google.com/maps/documentation/tile/3d-tiles) or [Cesium Ion API Key](https://cesium.com/platform/cesium-ion/) required_
 
-[Cesium Ion 3D Tiles](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/ionExample.html)
+[Cesium Ion 3D Tiles](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/ionExample.html)
 
-[Google Photorealistic Tiles](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/googleMapsAerial.html)
+[Cesium Ion Lunar Tiles](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/ionLunar.html)
 
-[Google Globe Tiles](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/googleMapsExample.html)
+[Cesium Ion Martian Tiles](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/ionLunar.html?mars)
+
+[Google Photorealistic Tiles](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/googleMapsAerial.html)
+
+[Google Globe Tiles](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/googleMapsExample.html)
 
 **Customization**
 
-[Custom material example](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/customMaterial.html)
+[Custom material example](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/customMaterial.html)
 
-[Rendering shadows from offscreen tiles example](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/offscreenShadows.html)
+[Rendering shadows from offscreen tiles example](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/offscreenShadows.html)
 
-[Tile fade transition](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/fadingTiles.html)
+[Alternate texture overlays](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/landformSiteOverlay.html)
 
-**Debug Pages**
+**Plugins**
 
-[B3DM Loading](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/b3dmExample.html)
+[Tile Metadata](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/metadata.html)
 
-[I3DM Loading](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/i3dmExample.html)
+[Tile LoD Fade Transition](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/fadingTiles.html)
 
-[PNTS Loading](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/pntsExample.html)
+[Deep Zoom Image Format Support](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/deepZoom.html)
 
-[Ellipsoid Region Bounds](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/ellipsoid.html)
+[TMS, XYZ Map Tiles Support](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/mapTiles.html)
 
+[WMTS Map Tiles Support](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/wmtsTiles.html)
+
+[WMS Map Tiles Support](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/wmsTiles.html)
+
+[Quantized Mesh with Overlays](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/quantMeshOverlays.html)
+
+[Loading Tiles in Region Volumes](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/loadRegion.html)
+
+[GeoJSON Overlays](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/geojson.html)
+
+**React Three Fiber**
+
+See the [dedicated documentation](./src/r3f/README.md) for information on using the project with `@react-three/fiber`.
 
 # Use
 
@@ -56,7 +73,7 @@ npm install 3d-tiles-renderer --save
 
 ## Basic TilesRenderer
 
-Setting up a basic application with a 3D Tile Set.
+Setting up a basic application with a 3D Tileset.
 
 ```js
 import { TilesRenderer } from '3d-tiles-renderer';
@@ -66,6 +83,15 @@ import { TilesRenderer } from '3d-tiles-renderer';
 const tilesRenderer = new TilesRenderer( './path/to/tileset.json' );
 tilesRenderer.setCamera( camera );
 tilesRenderer.setResolutionFromRenderer( camera, renderer );
+tilesRenderer.addEventListener( 'load-root-tileset', () => {
+
+	// optionally center the tileset in case it's far off center
+	const sphere = new Sphere();
+	tilesRenderer.getBoundingSphere( sphere );
+	tilesRenderer.group.position.copy( sphere.center ).multiplyScalar( - 1 );
+
+} );
+
 scene.add( tilesRenderer.group );
 
 renderLoop();
@@ -85,20 +111,19 @@ function renderLoop() {
 
 ## Custom Material
 
-Setting up a 3D Tile Set using a custom material.
+Setting up a 3D Tileset using a custom material.
 
 ```js
 const tilesRenderer = new TilesRenderer( './path/to/tileset.json' );
 tilesRenderer.setCamera( camera );
 tilesRenderer.setResolutionFromRenderer( camera, renderer );
-tilesRenderer.onLoadModel = function ( scene ) {
+tilesRenderer.addEventListener( 'load-model', ( { scene } ) => {
 
 	// create a custom material for the tile
 	scene.traverse( c => {
 
 		if ( c.material ) {
 
-			c.originalMaterial = c.material;
 			c.material = new MeshBasicMaterial();
 
 		}
@@ -107,7 +132,7 @@ tilesRenderer.onLoadModel = function ( scene ) {
 
 };
 
-tilesRenderer.onDisposeModel = function ( scene ) {
+tilesRenderer.addEventListener( 'dispose-model', ( { scene } ) => {
 
 	// dispose of any manually created materials
 	scene.traverse( c => {
@@ -142,6 +167,7 @@ tilesRenderer2.setResolutionFromRenderer( camera, renderer );
 tilesRenderer2.lruCache = tilesRenderer.lruCache;
 tilesRenderer2.downloadQueue = tilesRenderer.downloadQueue;
 tilesRenderer2.parseQueue = tilesRenderer.parseQueue;
+tilesRenderer2.processNodeQueue = tilesRenderer.processNodeQueue;
 
 // add them to the scene
 scene.add( tilesRenderer.group );
@@ -150,12 +176,13 @@ scene.add( tilesRenderer2.group );
 
 ## Adding DRACO Decompression Support
 
-Adding support for DRACO decompression within the GLTF files that are transported in B3DM and I3DM formats. The same approach can be used to add support for KTX2 and DDS textures.
+Adding support for DRACO decompression within the GLTF files that are transported in B3DM and I3DM formats. The same approach can be used to add support for KTX2 and DDS textures. Alternatively the [GLTFExtensionsPlugin](./src/plugins/README.md#gltfextensionsplugin) can be used to simplify the setup.
 
 ```js
 
 // Note the DRACO compression files need to be supplied via an explicit source.
 // We use unpkg here but in practice should be provided by the application.
+// Decompressing GLTF requires the GLTF branch of the draco decoder
 const tilesRenderer = new TilesRenderer( './path/to/tileset.json' );
 
 const dracoLoader = new DRACOLoader();
@@ -164,21 +191,21 @@ dracoLoader.setDecoderPath( 'https://unpkg.com/three@0.123.0/examples/js/libs/dr
 const loader = new GLTFLoader( tilesRenderer.manager );
 loader.setDRACOLoader( dracoLoader );
 
-tilesRenderer.manager.addHandler( /\.gltf$/, loader );
+tilesRenderer.manager.addHandler( /\.(gltf|glb)$/g, loader );
 ```
 
-Adding support for DRACO decompression within the PNTS files.
+Adding support for DRACO decompression within the PNTS files requires a different draco decoder. See more info [here](https://github.com/mrdoob/three.js/tree/dev/examples/jsm/libs/draco).
 
 ```js
 
 // Note the DRACO compression files need to be supplied via an explicit source.
 // We use unpkg here but in practice should be provided by the application.
+// Decompressing point clouds should use the master branch of the draco decoder in place of the GLTF branch
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath( 'https://unpkg.com/three@0.123.0/examples/js/libs/draco/gltf/' );
-
+dracoLoader.setDecoderPath( 'https://unpkg.com/three@0.123.0/examples/js/libs/draco/' );
 
 const tilesRenderer = new TilesRenderer( './path/to/tileset.json' );
-tilesRenderer.manager.addHandler( /\.drc$/, loader );
+tilesRenderer.manager.addHandler( /\.drc$/g, dracoLoader );
 ```
 
 
@@ -219,13 +246,13 @@ fetch( url, { mode: 'cors' } )
 
 ## Render On Change
 
-The tile set and model load callbacks can be used to detect when the data has changed and a new render is necessary.
+The tileset and model load callbacks can be used to detect when the data has changed and a new render is necessary.
 
 ```js
 let needsRerender = true;
 const tilesRenderer = new TilesRenderer( './path/to/tileset.json' );
-tilesRenderer.onLoadTileSet = () => needsRerender = true;
-tilesRenderer.onLoadModel = () => needsRerender = true;
+tilesRenderer.addEventListener( 'load-tileset', () => needsRerender = true );
+tilesRenderer.addEventListener( 'load-model', () => needsRerender = true );
 
 function renderLoop() {
 
@@ -271,12 +298,8 @@ if ( intersects.length ) {
 		// Log the batch data
 		const batchTable = batchTableObject.batchTable;
 		const hoveredBatchid = batchidAttr.getX( face.a );
-		const batchData = batchTable.getData( 'BatchTableKey' );
-		if ( batchData ) {
-
-			console.log( batchData[ hoveredBatchid ] );
-
-		}
+		const batchData = batchTable.getDataFromId( hoveredBatchid );
+		console.log( batchData );
 
 	}
 
@@ -285,24 +308,55 @@ if ( intersects.length ) {
 
 # API
 
+See the [plugins documentation](./PLUGINS.md) for GLTFLoader extension plugins, TilesRenderer plugins, and extra classes.
+
 ## TilesRenderer
 
-_extends `THREE.EventDispatcher`` & [TilesRendererBase](https://github.com/NASA-AMMOS/3DTilesRendererJS/blob/master/src/base/TilesRendererBase.js), which can be used to implement a 3d tiles renderer in other engines_
+_extends `THREE.EventDispatcher` & [TilesRendererBase](https://github.com/NASA-AMMOS/3DTilesRendererJS/blob/master/src/core/TilesRendererBase.js), which can be used to implement a 3d tiles renderer in other engines_
 
 ### events
 
 ```js
-// fired when a new root or child tile set is loaded
-{ type: 'load-tile-set', tileSet: Object, url: String }
+// Fired when a new root or child tileset is loaded.
+{ type: 'load-tileset', tileset: Object, url: String }
 
-// fired when a tile model is loaded
+// Fired when a tile model is loaded.
 { type: 'load-model', scene: THREE.Group, tile: Object }
 
-// fired when a tile model is disposed
+// Fired when the content of a model is loaded. Fired along side the
+// above two events.
+{ type: 'load-content' }
+
+// Fired when a tile model is disposed.
 { type: 'dispose-model', scene: THREE.Group, tile: Object }
 
-// fired when a tiles visibility changes
-{ type: 'tile-visibility-change', scene: THREE.Group, tile: Object }
+// Fired when the tileset hierarchy is ready for "update to be called
+// again due to new content having loaded or asynchronous processing finished.
+{ type: 'needs-update' }
+
+// Fired when a tiles visibility changes.
+{ type: 'tile-visibility-change', scene: THREE.Group, tile: Object, visible: boolean }
+
+// Fired when tiles start loading.
+{ type: 'tiles-load-start' }
+
+// Fired when all tiles finish loading.
+{ type: 'tiles-load-end' }
+
+// Fired when tile content begins downloading.
+{ type: 'tile-download-start', tile: Object }
+
+// Fired when a tile content or the root tileset fails to load.
+{ type: 'load-error', tile: Object | null, error: Error, url: string | URL }
+
+// Fired when a camera is added to be accounted for when traversing the tileset.
+{ type: 'add-camera', camera: Camera }
+
+// Fired when a camera is removed from being accounted for when traversing the tileset.
+{ type: 'delete-camera', camera: Camera }
+
+// Fired when the resolution being rendered to is changed for any tracked camera.
+{ type: 'camera-resolution-change' }
 ```
 
 ### .fetchOptions
@@ -311,7 +365,7 @@ _extends `THREE.EventDispatcher`` & [TilesRendererBase](https://github.com/NASA-
 fetchOptions = {} : Object
 ```
 
-Options passed to `fetch` when loading tile set and model data.
+Options passed to `fetch` when loading tileset and model data.
 
 ### .errorTarget
 
@@ -321,16 +375,6 @@ errorTarget = 6 : Number
 
 The target screenspace error in pixels to target when updating the geometry. Tiles will not render if they have below this level of screenspace error. See the ["geometric error" section in the 3d tiles specification](https://github.com/CesiumGS/3d-tiles/tree/master/specification#geometric-error) for more information.
 
-### .errorThreshold
-
-```js
-errorThreshold = Infinity : Number
-```
-
-Value used to compute the threshold `errorTarget * errorThreshold` above which tiles will not load or render. This is used to enable traversal to skip loading and rendering parent tiles far from the cameras current screenspace error requirement. If `errorThreshold` is set to `Infinity` then all parent tiles will be loaded and rendered. If it's set to `0` then no parent tiles will render and only the tiles that are being rendered will be loaded.
-
-Note that if the camera position zooms in or out dramatically setting this to a value other than `Infinity` could result in tiles flickering if the renderer updates to display tiles that were previously outside the error threshold. As such this setting is best suited for when camera movement is limited smaller movement scales such as real world movement speeds.
-
 ### .maxDepth
 
 ```js
@@ -339,21 +383,13 @@ maxDepth = Infinity : Number
 
 The max depth to which tiles will be loaded and rendered. Setting it to `1` will only render the root tile. If the tile at depth `maxDepth` is an empty tile then the next set of visible children will be rendered.
 
-### .loadSiblings
-
-```js
-loadSiblings = true : Boolean
-```
-
-If true then all sibling tiles will be loaded, as well, to ensure coherence when moving the camera. If false then only currently viewed tiles will be loaded.
-
 ### .displayActiveTiles
 
 ```js
 displayActiveTiles = false : Boolean
 ```
 
-"Active tiles" are those that are loaded and available but not necessarily visible. If [loadSiblings](#loadSiblings) is true then the tiles loaded up to the extents of the tile set will be considered active even outside the camera view. These tiles are useful for raycasting off camera or for casting shadows.
+"Active tiles" are those that are loaded and available but not necessarily visible. These tiles are useful for raycasting off camera or for casting shadows.
 
 Active tiles not currently visible in a camera frustum are removed from the scene as an optimization. Setting `displayActiveTiles` to true will keep them in the scene to be rendered from an outside camera view not accounted for by the tiles renderer.
 
@@ -364,24 +400,6 @@ autoDisableRendererCulling = true : Boolean
 ```
 
 If true then all tile meshes automatically have their [frustumCulled](https://threejs.org/docs/index.html#api/en/core/Object3D.frustumCulled) field set to false. This is useful particularly when using one camera because the tiles renderer automatically performs it's own frustum culling on visible tiles. If [displayActiveTiles](#displayActiveTiles) is true or multiple cameras are being used then you may consider setting this to false.
-
-### .optimizeRaycast
-
-```js
-optimizeRaycast = true : Boolean
-```
-
-If true then the `raycast` functions of the loaded tile objects are overriden to disable raycasting and the `TilesRenderer.group` raycast function is used to perform a raycast over all visible tiles. This enables an optimized traversal for raycasting against tiles. If `raycaster.firstHitOnly = true` then as well as a more optimal traversal of tiles the raycast will end early as soon as the closest intersction is found.
-
-If you would like to manage raycasting against tiles yourself this behavior can be disabled if needed by setting `optizeRaycast` to false.
-
-### .preprocessURL
-
-```js
-preprocessURL = null : ( uri : string | URL ) => string | URL;
-```
-
-Function to preprocess the url for each individual tile geometry or child tile set to be loaded. If null then the url is used directly.
 
 ### .lruCache
 
@@ -399,6 +417,8 @@ downloadQueue = new PriorityQueue : PriorityQueue
 
 _NOTE: This cannot be set once [update](#update) is called for the first time._
 
+Queue for downloading tile content. Max jobs defaults to `25`.
+
 ### .parseQueue
 
 ```js
@@ -407,15 +427,25 @@ parseQueue = new PriorityQueue : PriorityQueue
 
 _NOTE: This cannot be modified once [update](#update) is called for the first time._
 
+Queue for parsing downloaded tile content. Max jobs defaults to `5`.
+
+### .processNodeQueue
+
+```js
+processNodeQueue = new PriorityQueue : PriorityQueue
+```
+
+_NOTE: This cannot be set once [update](#update) is called for the first time._
+
+Queue for expanding and initializing tiles for traversal. Max jobs defaults to `25`.
+
 ### .group
 
 ```js
 group : Group
 ```
 
-The container group for the 3d tiles. Add this to the three.js scene in order to render it.
-
-When raycasting a higher performance traversal approach is used (see [optimizeRaycast](#optimizeRaycast)).
+The container group for the 3d tiles. Add this to the three.js scene in order to render it. The group includes an additional `matrixWorldInverse` field for transforming objects into the local tileset frame.
 
 ### .manager
 
@@ -425,13 +455,29 @@ manager : LoadingManager
 
 The manager used when loading tile geometry.
 
+### .loadProgress
+
+```js
+readOnly loadProgress : Number
+```
+
+Returns the total load progress between `[0, 1]`. Progress is measured since the last set of loading tiles completed.
+
+### .ellipsoid
+
+```js
+readonly ellipsoid : Ellipsoid
+```
+
+A definition on the ellipsoid used for the tileset. Defaults to the WGS84 ellipsoid and is modified if the `3DTILES_ELLIPSOID` plugin is present. Specified in the local frame of [TilesRenderer.group](#group).
+
 ### .constructor
 
 ```js
-constructor( url : String )
+constructor( url = null : String | null )
 ```
 
-Takes the url of the `tileset.json` for the tile set to be rendered.
+Takes the url of the `tileset.json` for the tileset to be rendered.
 
 ### .update
 
@@ -439,7 +485,7 @@ Takes the url of the `tileset.json` for the tile set to be rendered.
 update() : void
 ```
 
-Updates the tiles to render and kicks off loads for the appropriate tiles in the 3d tile set.
+Updates the tiles to render and kicks off loads for the appropriate tiles in the 3d tileset.
 
 Both `group.matrixWorld` and all cameras world matrices are expected to be up to date before this is called.
 
@@ -457,7 +503,7 @@ If any tiles failed to load due to server or network issues then they will not b
 getBoundingBox( box : Box3 ) : boolean
 ```
 
-Sets `box` to the axis aligned root bounding box of the tile set in the [group](#group) frame. Returns `false` if the tile root is not loaded and the bounding box cannot be set.
+Sets `box` to the axis aligned root bounding box of the tileset in the [group](#group) frame. Returns `false` if the tile root is not loaded and the bounding box cannot be set.
 
 ### .getOrientedBoundingBox
 
@@ -465,7 +511,7 @@ Sets `box` to the axis aligned root bounding box of the tile set in the [group](
 getOrientedBoundingBox( box : Box3, boxTransform : Matrix4 ) : boolean;
 ```
 
-Sets `box` and `boxTransform` to the bounds and matrix that describe the oriented bounding box that encapsulates the root of the tile set. Returns `false` if the tile root is not loaded and the bounding box cannot be set.
+Sets `box` and `boxTransform` to the bounds and matrix that describe the oriented bounding box that encapsulates the root of the tileset. Returns `false` if the tile root is not loaded and the bounding box cannot be set.
 
 ### .getBoundingSphere
 
@@ -473,7 +519,7 @@ Sets `box` and `boxTransform` to the bounds and matrix that describe the oriente
 getBoundingSphere( sphere : Sphere ) : boolean;
 ```
 
-Sets `sphere` to the bounding sphere that encapsulates the root of the tile set. Returns `false` if the tile root is not loaded and the bounding sphere cannot be set.
+Sets `sphere` to the bounding sphere that encapsulates the root of the tileset. Returns `false` if the tile root is not loaded and the bounding sphere cannot be set.
 
 ### .hasCamera
 
@@ -489,7 +535,7 @@ Returns `true` if the camera has already been set on the renderer.
 setCamera( camera : Camera ) : boolean
 ```
 
-Adds the camera to the camera to be accounted for when traversing the tile set. Returns `false` if the camera is already being tracked. Returns `true` otherwise.
+Adds the camera to the camera to be accounted for when traversing the tileset. Returns `false` if the camera is already being tracked. Returns `true` otherwise.
 
 ### .deleteCamera
 
@@ -497,7 +543,7 @@ Adds the camera to the camera to be accounted for when traversing the tile set. 
 deleteCamera( camera : Camera ) : boolean
 ```
 
-Removes the given camera from being accounted for when traversing the tile set. Returns `false` if the camera was not tracked.
+Removes the given camera from being accounted for when traversing the tileset. Returns `false` if the camera was not tracked.
 
 ### .setResolution
 
@@ -506,7 +552,7 @@ setResolution( camera : Camera, resolution : Vector2 ) : boolean
 setResolution( camera : Camera, x : number, y : number ) : boolean
 ```
 
-Sets the resolution being rendered to for the given camera. Returns `false` if the camera is not being tracked.
+Sets the resolution being rendered to for the given camera. `setCamera` must be called first. Returns `false` if the camera is not already being used by the TilesRenderer.
 
 ### .setResolutionFromRenderer
 
@@ -514,7 +560,7 @@ Sets the resolution being rendered to for the given camera. Returns `false` if t
 setResolutionFromRenderer( camera : Camera, renderer : WebGLRenderer ) : boolean
 ```
 
-Sets the resolution being rendered to for the given camera via renderer which accounts for canvas size and current pixel ratio. Returns `false` if the camera is not being tracked.
+Sets the resolution being rendered to for the given camera via renderer which accounts for canvas size. The pixel ratio is ignored to help normalize the amount of data loaded and performance across devices. `setCamera` must be called first. Returns `false` if the camera is not already being used by the TilesRenderer.
 
 ### .forEachLoadedModel
 
@@ -522,39 +568,44 @@ Sets the resolution being rendered to for the given camera via renderer which ac
 forEachLoadedModel( callback : ( scene : Object3D, tile : object ) => void ) : void
 ```
 
-Fires the callback for every loaded scene in the hierarchy with the associatd tile as the second argument. This can be used to update the materials of all loaded meshes in the tile set.
+Fires the callback for every loaded scene in the hierarchy with the associated tile as the second argument. This can be used to update the materials of all loaded meshes in the tileset.
 
-### .onLoadTileSet
-
-```js
-onLoadTileSet = null : ( tileSet : Tileset ) => void
-```
-
-Callback that is called whenever a tile set is loaded.
-
-### .onLoadModel
+### .registerPlugin
 
 ```js
-onLoadModel = null : ( scene : Object3D, tile : Tile ) => void
+registerPlugin( plugin : TilesPlugin ) : void
 ```
 
-Callback that is called every time a model is loaded. This can be used in conjunction with [.forEachLoadedModel](#forEachLoadedModel) to set the material of all load and still yet to load meshes in the tile set.
+Register a plugin to the TilesRenderer. See the [plugins documentation](./PLUGINS.md) for more information.
 
-### .onDisposeModel
+### .unregisterPlugin
 
 ```js
-onDisposeModel = null : ( scene : Object3D, tile : Tile ) => void
+unregisterPlugin( plugin : TilesPlugin | String ) : Boolean
 ```
 
-Callback that is called every time a model is disposed of. This should be used in conjunction with [.onLoadModel](#onLoadModel) to dispose of any custom materials created for a tile. Note that the textures, materials, and geometries that a tile loaded in with are all automatically disposed of even if they have been removed from the tile meshes.
+Removes a plugin from the tiles renderer. Returns `true` if the plugin was in the renderer and was removed. Returns `false` otherwise.
 
-### .onTileVisibilityChange
+### .getPluginByName
 
 ```js
-onTileVisibilityChange = null : ( scene : Object3D, tile : Tile, visible : boolean ) => void
+getPluginByName( name : string ) : TilesPlugin
 ```
 
-Callback that is called when a tile's visibility changed. The parameter `visible` is `true` when the tile is visible
+Returns the plugin with the given name if it has been registered. Returns the first one if multiple have been registered.
+
+### .getAttributions
+
+```js
+getAttributions( target = [] : Array ) : Array<{
+	type: string,
+	value: any,
+}>
+```
+
+Returns a list of attributions for the data in the tileset. The list can change when tile visibility changes.
+
+The "type" can be a "string", "html", or "image" depending on the type of attribution. Google Photorealistic Tiles, for example, returns a list of sources as a string.
 
 ### .dispose
 
@@ -564,123 +615,9 @@ dispose() : void
 
 Disposes of all the tiles in the renderer. Calls dispose on all materials, textures, and geometries that were loaded by the renderer and subsequently calls [onDisposeModel](#onDisposeModel) for any loaded tile model.
 
-## DebugTilesRenderer
-
-_extends [TilesRenderer](#TilesRenderer)_
-
-Special variant of TilesRenderer that includes helpers for debugging and visualizing the various tiles in the tile set. Material overrides will not work as expected with this renderer. The debug renderer includes additional logic and initialization code which can cause performance loss so it's recommended to only use this when needed.
-
-### .colorMode
-
-```js
-colorMode = NONE : ColorMode
-```
-
-Which color mode to use when rendering the tile set. The following exported enumerations can be used:
-
-```js
-// No special color mode. Uses the default materials.
-NONE
-
-// Render the screenspace error from black to white with errorTarget
-// being the maximum value.
-SCREEN_ERROR
-
-// Render the geometric error from black to white with maxDebugError
-// being the maximum value.
-GEOMETRIC_ERROR
-
-// Render the distance from the camera to the tile as black to white
-// with maxDebugDistance being the maximum value.
-DISTANCE
-
-// Render the depth of the tile relative to the root as black to white
-// with maxDebugDepth being the maximum value.
-DEPTH
-
-// Render the depth of the tile relative to the nearest rendered parent
-// as black to white with maxDebugDepth being the maximum value.
-RELATIVE_DEPTH
-
-// Render leaf nodes as white and parent nodes as black.
-IS_LEAF
-
-// Render the tiles with a random color to show tile edges clearly.
-RANDOM_COLOR
-
-// Render every individual mesh in the scene with a random color.
-RANDOM_NODE_COLOR
-
-// Sets a custom color using the customColorCallback call back.
-CUSTOM_COLOR
-```
-### .customColorCallback
-
-```js
-customColorCallback: (tile: Tile, child: Object3D) => void
-```
-
-The callback used if `debugColor` is set to `CUSTOM_COLOR`. Value defaults to `null` and must be set explicitly.
-
-### .displayBoxBounds
-
-```js
-displayBoxBounds = false : Boolean
-```
-
-Display wireframe bounding boxes from the tiles `boundingVolume.box` (or derived from the region bounds) for every visible tile.
-
-### .displaySphereBounds
-
-```js
-displaySphereBounds = false : Boolean
-```
-
-Display wireframe bounding boxes from the tiles `boundingVolume.sphere` (or derived from the bounding box / region bounds) for every visible tile.
-
-### .displayRegionBounds
-
-```js
-displayRegionBounds = false : Boolean
-```
-
-Display wireframe bounding rgions from the tiles `boundingVolume.region` for every visible tile if it exists.
-
-### .maxDebugDepth
-
-```js
-maxDebugDepth = - 1 : Number
-```
-
-The depth value that represents white when rendering with `DEPTH` or `RELATIVE_DEPTH` [colorMode](#colorMode). If `maxDebugDepth` is `-1` then the maximum depth of the tile set is used.
-
-### .maxDebugError
-
-```js
-maxDebugError = - 1 : Number
-```
-
-The error value that represents white when rendering with `GEOMETRIC_ERROR` [colorMode](#colorMode). If `maxDebugError` is `-1` then the maximum geometric error in the tile set is used.
-
-### .maxDebugDistance
-
-```js
-maxDebugDistance = - 1 : Number
-```
-
-The distance value that represents white when rendering with `DISTANCE` [colorMode](#colorMode). If `maxDebugDistance` is `-1` then the radius of the tile set is used.
-
-### .getDebugColor
-
-```js
-getDebugColor : ( val : Number, target : Color ) => void
-```
-
-The function used to map a [0, 1] value to a color for debug visualizations. By default the color is mapped from black to white.
-
 ## PriorityQueue
 
-Piority-sorted queue to prioritize file downloads and parsing.
+Priority-sorted queue to prioritize file downloads and parsing.
 
 ### .maxJobs
 
@@ -696,7 +633,7 @@ The maximum number of jobs to be processing at once.
 priorityCallback = null : ( itemA, itemB ) => Number
 ```
 
-Function to derive the job priority of the given item. Higher priority values get processed first.
+Function to derive the job priority of the given item. Higher priority values get processed first (ie return 1 to have itemA processed first).
 
 ### .schedulingCallback
 
@@ -704,51 +641,7 @@ Function to derive the job priority of the given item. Higher priority values ge
 schedulingCallback = requestAnimationFrame : ( cb : Function ) => void
 ```
 
-A function used for scheduling when to run jobs next so more work doesn't happen in a single frame than there is time for -- defaults to the next frame. This should be overriden in scenarios where requestAnimationFrame is not reliable, such as when running in WebXR. See the VR demo for one example on how to handle this with WebXR.
-
-## GoogleTilesRenderer
-
-_extends [TilesRenderer](#TilesRenderer)_
-
-Variant of the TilesRenderer designed to easily support [Google's Photorealistic 3D Tiles API](https://cloud.google.com/blog/products/maps-platform/create-immersive-3d-map-experiences-photorealistic-3d-tiles). Handles adding api key to all requests, reading tile credits, and initializes tile set traversal options to reasonable defaults for the globe.
-
-### constructor
-
-```js
-constructor( apiKey: String )
-```
-
-Takes the Google Photorealistic Tiles API Key.
-
-### .getCreditsString
-
-```js
-getCreditsString(): String;
-```
-
-Returns a string of unique credits for all the tiles currently displayed.
-
-### .setLatLonToYUp
-
-```js
-setLatLonToYUp( lat: Number, lon: Number ): void;
-```
-
-Rotates and positions the local transformation of the tile group object so the surface of the globe ellipsoid at the specified latitude and longitude faces Y+, X+ points north, and Z+ points east and is centered at 0, 0, 0.
-
-## CesiumIonTilesRenderer
-
-_extends [TilesRenderer](#TilesRenderer)_
-
-Variant of TilesRenderer designed to easily support the [Cesium Ion API](https://cesium.com/learn/ion/rest-api/#section/Authentication). Handles initial url resolution, access tokens in the header, and query parameter additions.
-
-### constructor
-
-```js
-constructor( ionAssetId: String | Number, ionAccessToken: String )
-```
-
-Takes the Ion asset id and access token.
+A function used for scheduling when to run jobs next so more work doesn't happen in a single frame than there is time for -- defaults to the next frame. This should be overridden in scenarios where requestAnimationFrame is not reliable, such as when running in WebXR. See the VR demo for one example on how to handle this with WebXR.
 
 ## LRUCache
 
@@ -760,7 +653,7 @@ Utility class for the TilesRenderer to keep track of currently used items so ren
 maxSize = 800 : number
 ```
 
-The maximum cached size. If that current amount of cached items is equal to this value then no more items can be cached.
+The maximum cached size in number of items. If that current amount of cached items is equal to this value then no more items can be cached.
 
 ### .minSize
 
@@ -768,7 +661,27 @@ The maximum cached size. If that current amount of cached items is equal to this
 minSize = 600 : number
 ```
 
-The minimum cache size. Above this cached data will be unloaded if it's unused.
+The minimum cache size in number of items. Above this cached data will be unloaded if it's unused.
+
+### .maxBytesSize
+
+```js
+maxByteSize = 0.4 * 2**30 : Number
+```
+
+The maximum cached size in bytes. If that current amount of cached bytes is equal to this value then no more items can be cached.
+
+_NOTE: Only works with three >= 0.166.0._
+
+### .minBytesSize
+
+```js
+minByteSize = 0.3 * 2**30 : Number
+```
+
+The minimum cache size in number of bytes. Above this cached data will be unloaded if it's unused.
+
+_NOTE: Only works with three >= 0.166.0._
 
 ### .unloadPercent
 
@@ -781,10 +694,10 @@ The maximum percentage of [minSize](#minSize) to unload during a given frame.
 ### .unloadPriorityCallback
 
 ```js
-unloadPriorityCallback = null : ( item ) => Number
+unloadPriorityCallback = null : ( itemA, itemB ) => Number
 ```
 
-Function to derive the unload priority of the given item. Higher priority values get unloaded first.
+Function to derive the unload priority of the given item. Higher priority values get unloaded first (ie return 1 to have itemA removed first).
 
 ## BatchTable
 
@@ -796,23 +709,26 @@ getKeys() : Array<String>
 
 Returns the keys of all the data in the batch table.
 
-### .getData
+### .getDataFromId
 
 ```js
-getData(
-	key : String,
-	defaultComponentType = null : String | null,
-	defaultType = null : String | null,
-) : Array | TypedArray | null
+getDataFromId( id: Number, target?: Object ) : Object;
 ```
 
-Returns the data associated with the `key` passed into the function. If the component and type are specified in the batch table contents then those values are used otherwise the values in `defaultComponentType` and `defaultType` are used. Returns null if the key is not in the table.
+Returns an object definition for all properties of the batch table and its extensions for a given `id`.
+A `target` object can be specified to store the result. Throws an error if the id is out of the batch table bounds.
 
-`defaultComponentType` can be set to `BYTE`, `UNSIGNED_BYTE`, `SHORT`, `UNSIGNED_SHORT`, `INT`, `UNSIGNED_INT`, `FLOAT`, or `DOUBLE`. `defaultType` can be set to `SCALAR`, `VEC2`, `VEC3`, or `VEC4`.
+### .getPropertyArray
+
+```js
+getPropertyArray( key : String ) : Array | TypedArray | null
+```
+
+Returns an array of data associated with the `key` passed into the function. Returns null if the key is not in the table.
 
 # LICENSE
 
-The software is available under the [Apache V2.0 license](../LICENSE.txt).
+The software is available under the [Apache V2.0 license](LICENSE).
 
 Copyright © 2020 California Institute of Technology. ALL RIGHTS
 RESERVED. United States Government Sponsorship Acknowledged.

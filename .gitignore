@@ -60,5 +60,11 @@ typings/
 # next.js build output
 .next
 
+# IDEs and editors
+/.idea
+
 example/local-data
 example/dev-bundle
+build
+
+pnpm-lock.yaml

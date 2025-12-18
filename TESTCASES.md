@@ -2,12 +2,11 @@
 
 Series of manually performed test cases for scenarios that are difficult / not feasible to test in an automated fashion.
 
-## Verify all sibling tiles load when loadSiblings = true
+## Verify all sibling tiles load
 
 #### steps
 
 1. Open the kitchen sink example.
-1. Ensure `loadSiblings` is enabled.
 1. Ensure `displayActiveTiles` is enabled.
 1. Zoom in as much as possible so much of the tileset is not visible.
 1. Wait until all tiles have loaded.
@@ -18,18 +17,6 @@ Series of manually performed test cases for scenarios that are difficult / not f
 
 Tiles are displayed all the way out to the edge of the tileset.
 
-## Verify sibling tiles do _not_ load when loadSiblings = false
-
-#### steps
-
-1. Open the kitchen sink example.
-1. Ensure `loadSiblings` is disabled.
-1. Ensure `displayActiveTiles` is enabled.
-1. Zoom in as much as possible so much of the tileset is not visible.
-1. Wait until all tiles have loaded.
-1. Disable the `enableUpdate` option.
-1. Zoom out to view the whole tileset.
-
 #### expected
 
 Only tiles that were visible when zoomed in are displayed.
@@ -39,7 +26,6 @@ Only tiles that were visible when zoomed in are displayed.
 #### steps
 
 1. Open the kitchen sink example.
-1. Ensure `loadSiblings` is enabled.
 1. Ensure `displayActiveTiles` is enabled.
 1. Zoom in as much as possible so much of the tileset is not visible.
 1. Wait until all tiles have loaded.
@@ -216,7 +202,7 @@ Verify that an error is logged stating that the tileset could not be found just 
 
 #### steps
 
-1. Open the kitchen sink example with a midtile with broken content by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#../data/tileset-broken-root-content.json).
+1. Open the kitchen sink example with a midtile with broken content by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/#../data/tileset-broken-root-content.json).
 1. Set the error threshold as high as it goes.
 1. Click rebuild.
 
@@ -228,7 +214,7 @@ Verify an error is logged stating that the root tile content could not be loaded
 
 #### steps
 
-1. Open the kitchen sink example with the no root content tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#../data/tileset-no-root-content.json).
+1. Open the kitchen sink example with the no root content tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/#../data/tileset-no-root-content.json).
 1. Set the error threshold as high as it goes.
 1. Click rebuild.
 
@@ -240,7 +226,7 @@ Verify that the tileset still renders correctly.
 
 #### steps
 
-1. Open the kitchen sink example with a remote tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#https://raw.githubusercontent.com/NASA-AMMOS/3DTilesRendererJS/master/example/data/tileset.json).
+1. Open the kitchen sink example with a remote tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/#https://raw.githubusercontent.com/NASA-AMMOS/3DTilesRendererJS/master/example/data/tileset.json).
 
 #### expected
 
@@ -250,7 +236,7 @@ Verify the tileset loads correctly and tehre are no errors in the console.
 
 #### steps
 
-1. Open the kitchen sink example with the no root content tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#../data/tileset-no-root-content.json).
+1. Open the kitchen sink example with the no root content tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/#../data/tileset-no-root-content.json).
 1. Slowly move the tileset offscreen by right clicking and dragging the view.
 
 #### expected
@@ -274,57 +260,11 @@ Verify no errors are logged.
 
 Verify that the stats display 125 geometries, 126 textures, and 1 programs.
 
-## Verify stopAtEmptyTiles works
-
-#### steps
-
-1. Open the kitchen sink example by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/).
-1. Set `maxDepth` to 1.
-1. Verify that only 1 tile is visible.
-1. Open the kitchen sink example with the no root content tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#../data/tileset-no-root-content.json).
-1. Set `maxDepth` to 1.
-1. Verify that all tiles disappear.
-
-#### expected
-
-No tiles are visible when the active leafs have no content.
-
-## Verify maxDepth limit does not stop at empty tiles when stopAtEmptyTiles = false
-
-1. Open the kitchen sink example by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/).
-1. Set `maxDepth` to 1.
-1. Verify that only 1 tile is visible.
-1. Open the kitchen sink example with the no root content tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#../data/tileset-no-root-content.json).
-1. Disable `stopAtEmptyTiles`.
-1. Set `maxDepth` to 1.
-1. Verify that 4 tiles are visible.
-
-#### expected
-
-The next shallowest tiles are visible past the `maxDepth` cutoff.
-
-## Verify tileset with missing mid tile content loads and renders correctly
-
-#### steps
-
-1. Open the kitchen sink example with the no root content tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#../data/tileset-no-midtile-content.json).
-1. Zoom in slowly and verify the tiles load correctly and completely.
-1. Set `errorTarget` to 0.
-1. Set `maxDepth` to 3.
-1. Set `colorMode` to `RANDOM_COLOR`.
-1. Verify that one tile is missing.
-1. Disable `stopAtEmptyTiles`.
-1. Verify that there are four smaller tiles compared to the rest of the tileset where the missing midtile with content is.
-
-#### expected
-
-The tileset renders and loads correctly.
-
 ## Verify tileset with additive tiles renders correctly
 
 #### steps
 
-1. Open the kitchen sink example with the no root content tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#../data/tileset-no-root-content.json).
+1. Open the kitchen sink example with the no root content tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/#../data/tileset-no-root-content.json).
 1. Set `colorMode` to `RANDOM_COLOR`.
 
 #### expected
@@ -347,7 +287,7 @@ Verify the tileset loads correctly and there are no missing chunks or errors in 
 
 #### steps
 
-1. Load `tileset-external-broken.json` in the kitchen sink example [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#../data/tileset-external-broken.json).
+1. Load `tileset-external-broken.json` in the kitchen sink example [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/#../data/tileset-external-broken.json).
 1. Zoom in and out.
 1. Set target error to `0`.
 
@@ -359,7 +299,7 @@ Verify that the external tileset does not load but the rest of the tileset conti
 
 #### steps
 
-1. Load `tileset-external.json` in the kitchen sink example [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#../data/tileset-external.json).
+1. Load `tileset-external.json` in the kitchen sink example [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/#../data/tileset-external.json).
 1. Zoom in and out.
 1. Set target error to `0`.
 1. Ensure external tileset has loaded by running `tiles.root.children[0].children[0].children` in the console and verifying it's not empty.
@@ -371,11 +311,11 @@ Verify that the external tileset does not load but the rest of the tileset conti
 
 Verify all steps happen as written.
 
-## Verify disposing of the tileset removes all sub tile sets
+## Verify disposing of the tileset removes all sub tilesets
 
 #### steps
 
-1. Load `tileset-external.json` in the kitchen sink example [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#../data/tileset-external.json).
+1. Load `tileset-external.json` in the kitchen sink example [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/#../data/tileset-external.json).
 1. Zoom in and out to load in tiles.
 1. Set target error to `0`.
 1. Open render stats display.
@@ -386,11 +326,11 @@ Verify all steps happen as written.
 
 Verify that the total geometries in the render stats display is still "220".
 
-## Verify tileset raycasting with additive tile sets
+## Verify tileset raycasting with additive tilesets
 
 #### steps
 
-1. Open the kitchen sink example with the no root content tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/#../data/tileset-add.json).
+1. Open the kitchen sink example with the no root content tileset by navigating [here](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/#../data/tileset-add.json).
 1. Set `colorMode` to `RANDOM_COLOR`.
 1. Set `maxDepth` to 2 so two layers are displayed on top of eachother.
 1. Click the color that represents the root tile and ensure depth is logged as "0".
