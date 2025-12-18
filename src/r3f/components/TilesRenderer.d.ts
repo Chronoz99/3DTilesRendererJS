@@ -56,6 +56,7 @@ interface TilesRendererProps
 	extends Partial<TilesRendererImpl>,
 	TilesRendererEventMapForR3f {
 	url?: string;
+	cachedRootJson?: object | null;
 	enabled?: boolean;
 	dispose?: () => void;
 	children?: ReactNode;

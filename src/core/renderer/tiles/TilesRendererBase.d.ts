@@ -23,7 +23,7 @@ export class TilesRendererBase {
 	downloadQueue : PriorityQueue;
 	processNodeQueue: PriorityQueue;
 
-	constructor( url?: string );
+	constructor( url?: string, cachedRootJson?: object | null );
 	update() : void;
 	registerPlugin( plugin: object ) : void;
 	unregisterPlugin( plugin: object | string ) : boolean;

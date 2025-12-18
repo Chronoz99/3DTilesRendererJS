@@ -127,12 +127,13 @@ export class TilesRendererBase {
 
 	}
 
-	constructor( url = null ) {
+	constructor( url = null, cachedRootJson = null ) {
 
 		// state
 		this.rootLoadingState = UNLOADED;
 		this.rootTileset = null;
 		this.rootURL = url;
+		this.cachedRootJson = cachedRootJson;
 		this.fetchOptions = {};
 		this.plugins = [];
 		this.queuedTiles = [];
@@ -824,6 +825,18 @@ export class TilesRendererBase {
 		// transform the url
 		let processedUrl = this.rootURL;
 		this.invokeAllPlugins( plugin => processedUrl = plugin.preprocessURL ? plugin.preprocessURL( processedUrl, null ) : processedUrl );
+
+		if ( this.cachedRootJson ) {
+
+			return Promise.resolve( this.cachedRootJson )
+				.then( root => {
+
+					this.preprocessTileset( root, processedUrl );
+					return root;
+
+				} );
+
+		}
 
 		// load the tileset root
 		const pr = this

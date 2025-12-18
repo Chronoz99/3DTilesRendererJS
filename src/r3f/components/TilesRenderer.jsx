@@ -221,7 +221,7 @@ export const TilesPlugin = forwardRef( function TilesPlugin( props, ref ) {
 // component for adding a TilesRenderer to the scene
 export const TilesRenderer = forwardRef( function TilesRenderer( props, ref ) {
 
-	const { url, group = {}, enabled = true, children, ...options } = props;
+	const { url, cachedRootJson = null, group = {}, enabled = true, children, ...options } = props;
 	const [ camera, gl, invalidate ] = useThree( state => [ state.camera, state.gl, state.invalidate ] );
 	const [ tiles, setTiles ] = useState( null );
 
@@ -230,7 +230,7 @@ export const TilesRenderer = forwardRef( function TilesRenderer( props, ref ) {
 
 		const needsRender = () => invalidate();
 
-		const tiles = new TilesRendererImpl( url );
+		const tiles = new TilesRendererImpl( url, cachedRootJson );
 		tiles.addEventListener( 'needs-render', needsRender );
 		tiles.addEventListener( 'needs-update', needsRender );
 		setTiles( tiles );
@@ -244,7 +244,7 @@ export const TilesRenderer = forwardRef( function TilesRenderer( props, ref ) {
 
 		};
 
-	}, [ url, invalidate ] );
+	}, [ url, cachedRootJson, invalidate ] );
 
 	// update the resolution for the camera
 	useFrame( () => {
