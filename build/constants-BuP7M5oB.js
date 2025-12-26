@@ -4,8 +4,8 @@ class z {
   }
   set unloadPriorityCallback(t) {
     t.length === 1 ? (console.warn('LRUCache: "unloadPriorityCallback" function has been changed to take two arguments.'), this._unloadPriorityCallback = (a, e) => {
-      const s = t(a), l = t(e);
-      return s < l ? -1 : s > l ? 1 : 0;
+      const s = t(a), o = t(e);
+      return s < o ? -1 : s > o ? 1 : 0;
     }) : this._unloadPriorityCallback = t;
   }
   constructor() {
@@ -28,16 +28,16 @@ class z {
     const e = this.itemSet;
     if (e.has(t) || this.isFull())
       return !1;
-    const s = this.usedSet, l = this.itemList, i = this.callbacks;
-    return l.push(t), s.add(t), e.set(t, Date.now()), i.set(t, a), !0;
+    const s = this.usedSet, o = this.itemList, i = this.callbacks;
+    return o.push(t), s.add(t), e.set(t, Date.now()), i.set(t, a), !0;
   }
   has(t) {
     return this.itemSet.has(t);
   }
   remove(t) {
-    const a = this.usedSet, e = this.itemSet, s = this.itemList, l = this.bytesMap, i = this.callbacks, c = this.loadedSet;
+    const a = this.usedSet, e = this.itemSet, s = this.itemList, o = this.bytesMap, i = this.callbacks, c = this.loadedSet;
     if (e.has(t)) {
-      this.cachedBytes -= l.get(t) || 0, l.delete(t), i.get(t)(t);
+      this.cachedBytes -= o.get(t) || 0, o.delete(t), i.get(t)(t);
       const d = s.indexOf(t);
       return s.splice(d, 1), a.delete(t), e.delete(t), i.delete(t), c.delete(t), !0;
     }
@@ -60,6 +60,9 @@ class z {
   markAllUnused() {
     this.usedSet.clear();
   }
+  isUsed(t) {
+    return this.usedSet.has(t);
+  }
   // TODO: this should be renamed because it's not necessarily unloading all unused content
   // Maybe call it "cleanup" or "unloadToMinSize"
   unloadUnusedContent() {
@@ -68,7 +71,7 @@ class z {
       minSize: a,
       maxSize: e,
       itemList: s,
-      itemSet: l,
+      itemSet: o,
       usedSet: i,
       loadedSet: c,
       callbacks: d,
@@ -87,23 +90,23 @@ class z {
         } else
           return U ? 1 : -1;
       });
-      const A = Math.max(a * t, S * t), p = Math.ceil(Math.min(A, b, S)), w = Math.max(t * k, t * h), E = Math.min(w, k);
-      let o = 0, m = 0;
-      for (; this.cachedBytes - m > y || s.length - o > e; ) {
-        const n = s[o], r = u.get(n) || 0;
-        if (i.has(n) && c.has(n) || this.cachedBytes - m - r < y && s.length - o <= e)
+      const A = Math.max(a * t, S * t), p = Math.ceil(Math.min(A, b, S)), E = Math.max(t * k, t * h), w = Math.min(E, k);
+      let l = 0, m = 0;
+      for (; this.cachedBytes - m > y || s.length - l > e; ) {
+        const n = s[l], r = u.get(n) || 0;
+        if (i.has(n) && c.has(n) || this.cachedBytes - m - r < y && s.length - l <= e)
           break;
-        m += r, o++;
+        m += r, l++;
       }
-      for (; m < E || o < p; ) {
-        const n = s[o], r = u.get(n) || 0;
-        if (i.has(n) || this.cachedBytes - m - r < h && o >= p)
+      for (; m < w || l < p; ) {
+        const n = s[l], r = u.get(n) || 0;
+        if (i.has(n) || this.cachedBytes - m - r < h && l >= p)
           break;
-        m += r, o++;
+        m += r, l++;
       }
-      s.splice(0, o).forEach((n) => {
-        this.cachedBytes -= u.get(n) || 0, d.get(n)(n), u.delete(n), l.delete(n), d.delete(n), c.delete(n), i.delete(n);
-      }), f = o < S || m < k && o < b, f = f && o > 0;
+      s.splice(0, l).forEach((n) => {
+        this.cachedBytes -= u.get(n) || 0, d.get(n)(n), u.delete(n), o.delete(n), d.delete(n), c.delete(n), i.delete(n);
+      }), f = l < S || m < k && l < b, f = f && l > 0;
     }
     f && (this.unloadingHandle = requestAnimationFrame(() => this.scheduleUnload()));
   }
@@ -144,19 +147,19 @@ class G {
       resolve: null,
       promise: null
     };
-    return e.promise = new Promise((s, l) => {
+    return e.promise = new Promise((s, o) => {
       const i = this.items, c = this.callbacks;
-      e.resolve = s, e.reject = l, i.unshift(t), c.set(t, e), this.autoUpdate && this.scheduleJobRun();
+      e.resolve = s, e.reject = o, i.unshift(t), c.set(t, e), this.autoUpdate && this.scheduleJobRun();
     }), e.promise;
   }
   remove(t) {
     const a = this.items, e = this.callbacks, s = a.indexOf(t);
     if (s !== -1) {
-      const l = e.get(t);
-      l.promise.catch((i) => {
+      const o = e.get(t);
+      o.promise.catch((i) => {
         if (!(i instanceof C))
           throw i;
-      }), l.reject(new C()), a.splice(s, 1), e.delete(t);
+      }), o.reject(new C()), a.splice(s, 1), e.delete(t);
     }
   }
   removeByFilter(t) {
@@ -170,7 +173,7 @@ class G {
     this.sort();
     const t = this.items, a = this.callbacks, e = this.maxJobs;
     let s = 0;
-    const l = () => {
+    const o = () => {
       this.currJobs--, this.autoUpdate && this.scheduleJobRun();
     };
     for (; e > this.currJobs && t.length > 0 && s < e; ) {
@@ -181,27 +184,28 @@ class G {
       try {
         h = c(i);
       } catch (y) {
-        u(y), l();
+        u(y), o();
       }
-      h instanceof Promise ? h.then(d).catch(u).finally(l) : (d(h), l());
+      h instanceof Promise ? h.then(d).catch(u).finally(o) : (d(h), o());
     }
   }
   scheduleJobRun() {
     this.scheduled || (this.schedulingCallback(this._runjobs), this.scheduled = !0);
   }
 }
-const J = -1, I = 0, R = 1, _ = 2, D = 3, F = 6378137, N = 1 / 298.257223563, j = 6356752314245179e-9;
+const J = -1, I = 0, R = 1, _ = 2, D = 3, F = 4, N = 6378137, j = 1 / 298.257223563, Q = 6356752314245179e-9;
 export {
   J as F,
   z as L,
-  _ as P,
+  D as P,
+  R as Q,
   I as U,
-  F as W,
-  R as a,
-  D as b,
-  N as c,
-  j as d,
+  N as W,
+  _ as a,
+  F as b,
+  j as c,
+  Q as d,
   C as e,
   G as f
 };
-//# sourceMappingURL=constants-z3YLhXg0.js.map
+//# sourceMappingURL=constants-BuP7M5oB.js.map

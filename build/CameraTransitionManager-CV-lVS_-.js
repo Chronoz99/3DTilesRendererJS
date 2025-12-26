@@ -2,7 +2,7 @@ import { B3DMLoaderBase as Ve, PNTSLoaderBase as Le, I3DMLoaderBase as We, CMPTL
 import { g as Be, r as He } from "./LoaderBase-CfTLVHyZ.js";
 import { DefaultLoadingManager as At, Matrix4 as O, Vector3 as y, Vector2 as F, MathUtils as v, PointsMaterial as je, BufferGeometry as Ge, BufferAttribute as st, Color as Ze, Points as qe, InstancedMesh as Qe, Quaternion as it, Group as Pt, Ray as Ft, Sphere as $e, Frustum as Ye, Matrix3 as Xe, LoadingManager as Ke, EventDispatcher as mt, Euler as Je, Mesh as ti, PlaneGeometry as ei, ShaderMaterial as ii, Plane as ve, Raycaster as si, Clock as Te, PerspectiveCamera as Kt, OrthographicCamera as we } from "three";
 import { GLTFLoader as Xt } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { W as vt, c as Jt, b as oi, e as ni, a as ri } from "./MemoryUtils-R1TfIs9h.js";
+import { W as vt, c as Jt, b as oi, e as ni, a as ri } from "./MemoryUtils-BEiOVCnL.js";
 class De extends Ve {
   constructor(t = At) {
     super(), this.manager = t, this.adjustmentTransform = new O();
@@ -1682,4 +1682,4 @@ export {
   Ai as T,
   Ui as a
 };
-//# sourceMappingURL=CameraTransitionManager-SvgW6Pmv.js.map
+//# sourceMappingURL=CameraTransitionManager-CV-lVS_-.js.map

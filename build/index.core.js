@@ -1,150 +1,150 @@
-import { F as b, b as y, U as g, L as Z, f as I, a as w, P as A } from "./constants-z3YLhXg0.js";
-import { e as pe, c as ge, d as Te, W as me } from "./constants-z3YLhXg0.js";
-import { t as ee, c as H, L as U, r as v, g as te } from "./LoaderBase-CfTLVHyZ.js";
-import { a as ye, T as ve } from "./LoaderBase-CfTLVHyZ.js";
-function Q(s) {
-  if (!s)
+import { F as y, b as v, U as T, L as ee, f as A, a as w, Q as L, P as B } from "./constants-BuP7M5oB.js";
+import { e as ge, c as Te, d as me, W as be } from "./constants-BuP7M5oB.js";
+import { t as te, c as H, L as P, r as S, g as se } from "./LoaderBase-CfTLVHyZ.js";
+import { a as ve, T as Se } from "./LoaderBase-CfTLVHyZ.js";
+function Q(n) {
+  if (!n)
     return null;
-  let e = s.length;
-  const t = s.indexOf("?"), r = s.indexOf("#");
+  let e = n.length;
+  const t = n.indexOf("?"), r = n.indexOf("#");
   t !== -1 && (e = Math.min(e, t)), r !== -1 && (e = Math.min(e, r));
-  const n = s.lastIndexOf(".", e), o = s.lastIndexOf("/", e), a = s.indexOf("://");
-  return a !== -1 && a + 2 === o || n === -1 || n < o ? null : s.substring(n + 1, e) || null;
+  const s = n.lastIndexOf(".", e), o = n.lastIndexOf("/", e), a = n.indexOf("://");
+  return a !== -1 && a + 2 === o || s === -1 || s < o ? null : n.substring(s + 1, e) || null;
 }
-const L = {
+const U = {
   inView: !1,
   error: 1 / 0,
   distanceFromCamera: 1 / 0
-}, q = !0;
-function J(s) {
-  return s === y || s === b;
+}, J = !0;
+function j(n) {
+  return n === v || n === y;
 }
-function T(s, e) {
-  return s.__lastFrameVisited === e && s.__used;
+function m(n, e) {
+  return n.__lastFrameVisited === e && n.__used;
 }
-function k(s) {
-  return s.__childrenProcessed === s.children.length;
+function O(n) {
+  return n.__childrenProcessed === n.children.length;
 }
-function O(s) {
-  return s.__hasUnrenderableContent || s.parent && s.parent.geometricError < s.geometricError;
+function x(n) {
+  return n.__hasUnrenderableContent || n.parent && n.parent.geometricError < n.geometricError;
 }
-function x(s, e) {
-  s.__lastFrameVisited !== e.frameCount && (s.__lastFrameVisited = e.frameCount, s.__used = !1, s.__inFrustum = !1, s.__isLeaf = !1, s.__visible = !1, s.__active = !1, s.__error = 1 / 0, s.__distanceFromCamera = 1 / 0, s.__allChildrenReady = !1, e.calculateTileViewError(s, L), s.__inFrustum = L.inView, s.__error = L.error, s.__distanceFromCamera = L.distanceFromCamera);
+function N(n, e) {
+  n.__lastFrameVisited !== e.frameCount && (n.__lastFrameVisited = e.frameCount, n.__used = !1, n.__inFrustum = !1, n.__isLeaf = !1, n.__visible = !1, n.__active = !1, n.__error = 1 / 0, n.__distanceFromCamera = 1 / 0, n.__allChildrenReady = !1, e.calculateTileViewError(n, U), n.__inFrustum = U.inView, n.__error = U.error, n.__distanceFromCamera = U.distanceFromCamera);
 }
-function B(s, e, t = !1) {
-  if (e.ensureChildrenArePreprocessed(s), x(s, e), D(s, e, t), O(s) && k(s)) {
-    const r = s.children;
-    for (let n = 0, o = r.length; n < o; n++)
-      B(r[n], e, t);
+function D(n, e, t = !1) {
+  if (e.ensureChildrenArePreprocessed(n), N(n, e), k(n, e, t), x(n) && O(n)) {
+    const r = n.children;
+    for (let s = 0, o = r.length; s < o; s++)
+      D(r[s], e, t);
   }
 }
-function j(s, e) {
-  if (e.ensureChildrenArePreprocessed(s), T(s, e.frameCount) && (s.__hasContent && e.queueTileForDownload(s), k(s))) {
-    const t = s.children;
-    for (let r = 0, n = t.length; r < n; r++)
-      j(t[r], e);
+function W(n, e) {
+  if (e.ensureChildrenArePreprocessed(n), m(n, e.frameCount) && (n.__hasContent && e.queueTileForDownload(n), O(n))) {
+    const t = n.children;
+    for (let r = 0, s = t.length; r < s; r++)
+      W(t[r], e);
   }
 }
-function D(s, e, t = !1) {
-  s.__used || (t || (s.__used = !0, e.stats.used++), e.markTileUsed(s), s.__inFrustum === !0 && e.stats.inFrustum++);
+function k(n, e, t = !1) {
+  n.__used || (t || (n.__used = !0, e.stats.used++), e.markTileUsed(n), n.__inFrustum === !0 && e.stats.inFrustum++);
 }
-function se(s, e) {
-  return !(s.__error <= e.errorTarget && !O(s) || e.maxDepth > 0 && s.__depth + 1 >= e.maxDepth || !k(s));
+function ne(n, e) {
+  return !(n.__error <= e.errorTarget && !x(n) || e.maxDepth > 0 && n.__depth + 1 >= e.maxDepth || !O(n));
 }
-function W(s, e) {
-  if (e.ensureChildrenArePreprocessed(s), x(s, e), !s.__inFrustum)
+function z(n, e) {
+  if (e.ensureChildrenArePreprocessed(n), N(n, e), !n.__inFrustum)
     return;
-  if (!se(s, e)) {
-    D(s, e);
+  if (!ne(n, e)) {
+    k(n, e);
     return;
   }
   let t = !1, r = !1;
-  const n = s.children;
-  for (let o = 0, a = n.length; o < a; o++) {
-    const l = n[o];
-    W(l, e), t = t || T(l, e.frameCount), r = r || l.__inFrustum;
+  const s = n.children;
+  for (let o = 0, a = s.length; o < a; o++) {
+    const l = s[o];
+    z(l, e), t = t || m(l, e.frameCount), r = r || l.__inFrustum;
   }
-  if (s.refine === "REPLACE" && !r && n.length !== 0) {
-    s.__inFrustum = !1;
-    for (let o = 0, a = n.length; o < a; o++)
-      B(n[o], e, !0);
+  if (n.refine === "REPLACE" && !r && s.length !== 0) {
+    n.__inFrustum = !1;
+    for (let o = 0, a = s.length; o < a; o++)
+      D(s[o], e, !0);
     return;
   }
-  if (D(s, e), s.refine === "REPLACE" && (t && s.__depth !== 0 || q))
-    for (let o = 0, a = n.length; o < a; o++)
-      B(n[o], e);
+  if (k(n, e), n.refine === "REPLACE" && (t && n.__depth !== 0 || J))
+    for (let o = 0, a = s.length; o < a; o++)
+      D(s[o], e);
 }
-function z(s, e) {
+function K(n, e) {
   const t = e.frameCount;
-  if (!T(s, t))
+  if (!m(n, t))
     return;
-  const r = s.children;
-  let n = !1;
+  const r = n.children;
+  let s = !1;
   for (let o = 0, a = r.length; o < a; o++) {
     const l = r[o];
-    n = n || T(l, t);
+    s = s || m(l, t);
   }
-  if (!n)
-    s.__isLeaf = !0;
+  if (!s)
+    n.__isLeaf = !0;
   else {
     let o = !0;
     for (let a = 0, l = r.length; a < l; a++) {
       const i = r[a];
-      if (z(i, e), T(i, t)) {
-        const h = !O(i);
-        let c = !i.__hasContent || i.__hasRenderableContent && J(i.__loadingState) || i.__hasUnrenderableContent && i.__loadingState === b;
+      if (K(i, e), m(i, t)) {
+        const h = !x(i);
+        let c = !i.__hasContent || i.__hasRenderableContent && j(i.__loadingState) || i.__hasUnrenderableContent && i.__loadingState === y;
         c = h && c || i.__allChildrenReady, o = o && c;
       }
     }
-    s.__allChildrenReady = o;
+    n.__allChildrenReady = o;
   }
 }
-function K(s, e) {
+function Y(n, e) {
   const t = e.stats;
-  if (!T(s, e.frameCount))
+  if (!m(n, e.frameCount))
     return;
-  if (s.__isLeaf) {
-    s.__loadingState === y ? (s.__inFrustum && (s.__visible = !0, t.visible++), s.__active = !0, t.active++) : s.__hasContent && e.queueTileForDownload(s);
+  if (n.__isLeaf) {
+    n.__loadingState === v ? (n.__inFrustum && (n.__visible = !0, t.visible++), n.__active = !0, t.active++) : n.__hasContent && e.queueTileForDownload(n);
     return;
   }
-  const r = s.children, n = s.__hasContent, o = J(s.__loadingState) && n, a = (e.errorTarget + 1) * e.errorThreshold, l = s.__error <= a, i = s.refine === "ADD", h = s.__allChildrenReady || s.__depth === 0 && !q;
-  if (n && (l || i) && e.queueTileForDownload(s), (l && o && !h || o && i) && (s.__inFrustum && (s.__visible = !0, t.visible++), s.__active = !0, t.active++), !i && l && !h)
+  const r = n.children, s = n.__hasContent, o = j(n.__loadingState) && s, a = (e.errorTarget + 1) * e.errorThreshold, l = n.__error <= a, i = n.refine === "ADD", h = n.__allChildrenReady || n.__depth === 0 && !J;
+  if (s && (l || i) && e.queueTileForDownload(n), (l && o && !h || o && i) && (n.__inFrustum && (n.__visible = !0, t.visible++), n.__active = !0, t.active++), !i && l && !h)
     for (let c = 0, u = r.length; c < u; c++) {
       const f = r[c];
-      T(f, e.frameCount) && j(f, e);
+      m(f, e.frameCount) && W(f, e);
     }
   else
     for (let c = 0, u = r.length; c < u; c++)
-      K(r[c], e);
+      Y(r[c], e);
 }
-function Y(s, e) {
-  const t = T(s, e.frameCount);
-  if (t || s.__usedLastFrame) {
-    let r = !1, n = !1;
-    t ? (r = s.__active, e.displayActiveTiles ? n = s.__active || s.__visible : n = s.__visible) : x(s, e), s.__hasRenderableContent && s.__loadingState === y && (s.__wasSetActive !== r && e.invokeOnePlugin((a) => a.setTileActive && a.setTileActive(s, r)), s.__wasSetVisible !== n && e.invokeOnePlugin((a) => a.setTileVisible && a.setTileVisible(s, n))), s.__wasSetActive = r, s.__wasSetVisible = n, s.__usedLastFrame = t;
-    const o = s.children;
+function X(n, e) {
+  const t = m(n, e.frameCount);
+  if (t || n.__usedLastFrame) {
+    let r = !1, s = !1;
+    t ? (r = n.__active, e.displayActiveTiles ? s = n.__active || n.__visible : s = n.__visible) : N(n, e), n.__hasRenderableContent && n.__loadingState === v && (n.__wasSetActive !== r && e.invokeOnePlugin((a) => a.setTileActive && a.setTileActive(n, r)), n.__wasSetVisible !== s && e.invokeOnePlugin((a) => a.setTileVisible && a.setTileVisible(n, s))), n.__wasSetActive = r, n.__wasSetVisible = s, n.__usedLastFrame = t;
+    const o = n.children;
     for (let a = 0, l = o.length; a < l; a++) {
       const i = o[a];
-      Y(i, e);
+      X(i, e);
     }
   }
 }
-function ne(s) {
+function re(n) {
   let e = null;
   return () => {
     e === null && (e = requestAnimationFrame(() => {
-      e = null, s();
+      e = null, n();
     }));
   };
 }
-const M = Symbol("PLUGIN_REGISTERED"), $ = (s, e) => {
-  const t = s.priority || 0, r = e.priority || 0;
-  return t !== r ? t > r ? 1 : -1 : s.__used !== e.__used ? s.__used ? 1 : -1 : s.__error !== e.__error ? s.__error > e.__error ? 1 : -1 : s.__distanceFromCamera !== e.__distanceFromCamera ? s.__distanceFromCamera > e.__distanceFromCamera ? -1 : 1 : s.__depthFromRenderedParent !== e.__depthFromRenderedParent ? s.__depthFromRenderedParent > e.__depthFromRenderedParent ? -1 : 1 : 0;
-}, re = (s, e) => {
-  const t = s.priority || 0, r = e.priority || 0;
-  return t !== r ? t > r ? 1 : -1 : s.__lastFrameVisited !== e.__lastFrameVisited ? s.__lastFrameVisited > e.__lastFrameVisited ? -1 : 1 : s.__depthFromRenderedParent !== e.__depthFromRenderedParent ? s.__depthFromRenderedParent > e.__depthFromRenderedParent ? 1 : -1 : s.__loadingState !== e.__loadingState ? s.__loadingState > e.__loadingState ? -1 : 1 : s.__hasUnrenderableContent !== e.__hasUnrenderableContent ? s.__hasUnrenderableContent ? -1 : 1 : s.__error !== e.__error ? s.__error > e.__error ? -1 : 1 : 0;
+const M = Symbol("PLUGIN_REGISTERED"), $ = (n, e) => {
+  const t = n.priority || 0, r = e.priority || 0;
+  return t !== r ? t > r ? 1 : -1 : n.__used !== e.__used ? n.__used ? 1 : -1 : n.__error !== e.__error ? n.__error > e.__error ? 1 : -1 : n.__distanceFromCamera !== e.__distanceFromCamera ? n.__distanceFromCamera > e.__distanceFromCamera ? -1 : 1 : n.__depthFromRenderedParent !== e.__depthFromRenderedParent ? n.__depthFromRenderedParent > e.__depthFromRenderedParent ? -1 : 1 : 0;
+}, oe = (n, e) => {
+  const t = n.priority || 0, r = e.priority || 0;
+  return t !== r ? t > r ? 1 : -1 : n.__lastFrameVisited !== e.__lastFrameVisited ? n.__lastFrameVisited > e.__lastFrameVisited ? -1 : 1 : n.__depthFromRenderedParent !== e.__depthFromRenderedParent ? n.__depthFromRenderedParent > e.__depthFromRenderedParent ? 1 : -1 : n.__loadingState !== e.__loadingState ? n.__loadingState > e.__loadingState ? -1 : 1 : n.__hasUnrenderableContent !== e.__hasUnrenderableContent ? n.__hasUnrenderableContent ? -1 : 1 : n.__error !== e.__error ? n.__error > e.__error ? -1 : 1 : 0;
 };
-class le {
+class ce {
   get root() {
     const e = this.rootTileset;
     return e ? e.root : null;
@@ -153,8 +153,8 @@ class le {
     return console.warn('TilesRenderer: "rootTileSet" has been deprecated. Use "rootTileset" instead.'), this.rootTileset;
   }
   get loadProgress() {
-    const { stats: e, isLoading: t } = this, r = e.downloading + e.parsing, n = e.inCacheSinceLoad + (t ? 1 : 0);
-    return n === 0 ? 1 : 1 - r / n;
+    const { stats: e, isLoading: t } = this, r = e.queued + e.downloading + e.parsing, s = e.inCacheSinceLoad + (t ? 1 : 0);
+    return s === 0 ? 1 : 1 - r / s;
   }
   get errorThreshold() {
     return this._errorThreshold;
@@ -163,25 +163,26 @@ class le {
     console.warn('TilesRenderer: The "errorThreshold" option has been deprecated.'), this._errorThreshold = e;
   }
   constructor(e = null, t = null) {
-    this.rootLoadingState = g, this.rootTileset = null, this.rootURL = e, this.cachedRootJson = t, this.fetchOptions = {}, this.plugins = [], this.queuedTiles = [], this.cachedSinceLoadComplete = /* @__PURE__ */ new Set(), this.isLoading = !1;
-    const r = new Z();
-    r.unloadPriorityCallback = re;
-    const n = new I();
-    n.maxJobs = 25, n.priorityCallback = $;
-    const o = new I();
+    this.rootLoadingState = T, this.rootTileset = null, this.rootURL = e, this.cachedRootJson = t, this.fetchOptions = {}, this.plugins = [], this.queuedTiles = [], this.cachedSinceLoadComplete = /* @__PURE__ */ new Set(), this.isLoading = !1;
+    const r = new ee();
+    r.unloadPriorityCallback = oe;
+    const s = new A();
+    s.maxJobs = 25, s.priorityCallback = $;
+    const o = new A();
     o.maxJobs = 5, o.priorityCallback = $;
-    const a = new I();
-    a.maxJobs = 25, this.processedTiles = /* @__PURE__ */ new WeakSet(), this.visibleTiles = /* @__PURE__ */ new Set(), this.activeTiles = /* @__PURE__ */ new Set(), this.usedSet = /* @__PURE__ */ new Set(), this.lruCache = r, this.downloadQueue = n, this.parseQueue = o, this.processNodeQueue = a, this.stats = {
+    const a = new A();
+    a.maxJobs = 25, this.processedTiles = /* @__PURE__ */ new WeakSet(), this.visibleTiles = /* @__PURE__ */ new Set(), this.activeTiles = /* @__PURE__ */ new Set(), this.usedSet = /* @__PURE__ */ new Set(), this.loadingTiles = /* @__PURE__ */ new Set(), this.lruCache = r, this.downloadQueue = s, this.parseQueue = o, this.processNodeQueue = a, this.stats = {
       inCacheSinceLoad: 0,
       inCache: 0,
-      parsing: 0,
+      queued: 0,
       downloading: 0,
+      parsing: 0,
       failed: 0,
       inFrustum: 0,
       used: 0,
       active: 0,
       visible: 0
-    }, this.frameCount = 0, this._dispatchNeedsUpdateEvent = ne(() => {
+    }, this.frameCount = 0, this._dispatchNeedsUpdateEvent = re(() => {
       this.dispatchEvent({ type: "needs-update" });
     }), this.errorTarget = 16, this._errorThreshold = 1 / 0, this.displayActiveTiles = !1, this.maxDepth = 1 / 0;
   }
@@ -191,13 +192,13 @@ class le {
       throw new Error("TilesRendererBase: A plugin can only be registered to a single tileset");
     e.loadRootTileSet && !e.loadRootTileset && (console.warn('TilesRendererBase: Plugin implements deprecated "loadRootTileSet" method. Please rename to "loadRootTileset".'), e.loadRootTileset = e.loadRootTileSet), e.preprocessTileSet && !e.preprocessTileset && (console.warn('TilesRendererBase: Plugin implements deprecated "preprocessTileSet" method. Please rename to "preprocessTileset".'), e.preprocessTileset = e.preprocessTileSet);
     const t = this.plugins, r = e.priority || 0;
-    let n = t.length;
+    let s = t.length;
     for (let o = 0; o < t.length; o++)
       if ((t[o].priority || 0) > r) {
-        n = o;
+        s = o;
         break;
       }
-    t.splice(n, 0, e), e[M] = !0, e.init && e.init(this);
+    t.splice(s, 0, e), e[M] = !0, e.init && e.init(this);
   }
   unregisterPlugin(e) {
     const t = this.plugins;
@@ -213,32 +214,32 @@ class le {
   invokeOnePlugin(e) {
     const t = [...this.plugins, this];
     for (let r = 0; r < t.length; r++) {
-      const n = e(t[r]);
-      if (n)
-        return n;
+      const s = e(t[r]);
+      if (s)
+        return s;
     }
     return null;
   }
   invokeAllPlugins(e) {
     const t = [...this.plugins, this], r = [];
-    for (let n = 0; n < t.length; n++) {
-      const o = e(t[n]);
+    for (let s = 0; s < t.length; s++) {
+      const o = e(t[s]);
       o && r.push(o);
     }
     return r.length === 0 ? null : Promise.all(r);
   }
   // Public API
   traverse(e, t, r = !0) {
-    this.root && ee(this.root, (n, ...o) => (r && this.ensureChildrenArePreprocessed(n, !0), e ? e(n, ...o) : !1), t);
+    this.root && te(this.root, (s, ...o) => (r && this.ensureChildrenArePreprocessed(s, !0), e ? e(s, ...o) : !1), t);
   }
   getAttributions(e = []) {
     return this.invokeAllPlugins((t) => t !== this && t.getAttributions && t.getAttributions(e)), e;
   }
   update() {
-    const { lruCache: e, usedSet: t, stats: r, root: n, downloadQueue: o, parseQueue: a, processNodeQueue: l } = this;
-    if (this.rootLoadingState === g && (this.rootLoadingState = w, this.invokeOnePlugin((c) => c.loadRootTileset && c.loadRootTileset()).then((c) => {
+    const { lruCache: e, usedSet: t, stats: r, root: s, downloadQueue: o, parseQueue: a, processNodeQueue: l } = this;
+    if (this.rootLoadingState === T && (this.rootLoadingState = w, this.invokeOnePlugin((c) => c.loadRootTileset && c.loadRootTileset()).then((c) => {
       let u = this.rootURL;
-      u !== null && this.invokeAllPlugins((f) => u = f.preprocessURL ? f.preprocessURL(u, null) : u), this.rootLoadingState = y, this.rootTileset = c, this.dispatchEvent({ type: "needs-update" }), this.dispatchEvent({ type: "load-content" }), this.dispatchEvent({
+      u !== null && this.invokeAllPlugins((f) => u = f.preprocessURL ? f.preprocessURL(u, null) : u), this.rootLoadingState = v, this.rootTileset = c, this.dispatchEvent({ type: "needs-update" }), this.dispatchEvent({ type: "load-content" }), this.dispatchEvent({
         type: "load-tileset",
         tileset: c,
         url: u
@@ -248,15 +249,15 @@ class le {
         url: u
       });
     }).catch((c) => {
-      this.rootLoadingState = b, console.error(c), this.rootTileset = null, this.dispatchEvent({
+      this.rootLoadingState = y, console.error(c), this.rootTileset = null, this.dispatchEvent({
         type: "load-error",
         tile: null,
         error: c,
         url: this.rootURL
       });
-    })), !n)
+    })), !s)
       return;
-    r.inFrustum = 0, r.used = 0, r.active = 0, r.visible = 0, this.frameCount++, t.forEach((c) => e.markUnused(c)), t.clear(), W(n, this), z(n, this), K(n, this), Y(n, this);
+    r.inFrustum = 0, r.used = 0, r.active = 0, r.visible = 0, this.frameCount++, t.forEach((c) => e.markUnused(c)), t.clear(), z(s, this), K(s, this), Y(s, this), X(s, this), this.removeUnusedPendingTiles();
     const i = this.queuedTiles;
     i.sort(e.unloadPriorityCallback);
     for (let c = 0, u = i.length; c < u && !e.isFull(); c++)
@@ -264,21 +265,22 @@ class le {
     i.length = 0, e.scheduleUnload(), (o.running || a.running || l.running) === !1 && this.isLoading === !0 && (this.cachedSinceLoadComplete.clear(), r.inCacheSinceLoad = 0, this.dispatchEvent({ type: "tiles-load-end" }), this.isLoading = !1);
   }
   resetFailedTiles() {
-    this.rootLoadingState === b && (this.rootLoadingState = g);
+    this.rootLoadingState === y && (this.rootLoadingState = T);
     const e = this.stats;
     e.failed !== 0 && (this.traverse((t) => {
-      t.__loadingState === b && (t.__loadingState = g);
+      t.__loadingState === y && (t.__loadingState = T);
     }, null, !1), e.failed = 0);
   }
   dispose() {
-    [...this.plugins].forEach((n) => {
-      this.unregisterPlugin(n);
+    [...this.plugins].forEach((s) => {
+      this.unregisterPlugin(s);
     });
     const t = this.lruCache, r = [];
-    this.traverse((n) => (r.push(n), !1), null, !1);
-    for (let n = 0, o = r.length; n < o; n++)
-      t.remove(r[n]);
+    this.traverse((s) => (r.push(s), !1), null, !1);
+    for (let s = 0, o = r.length; s < o; s++)
+      t.remove(r[s]);
     this.stats = {
+      queued: 0,
       parsing: 0,
       downloading: 0,
       failed: 0,
@@ -286,7 +288,7 @@ class le {
       used: 0,
       active: 0,
       visible: 0
-    }, this.frameCount = 0;
+    }, this.frameCount = 0, this.loadingTiles.clear();
   }
   // Overrideable
   calculateBytesUsed(e, t) {
@@ -305,13 +307,13 @@ class le {
     e.__visible && (this.invokeOnePlugin((t) => t.setTileVisible && t.setTileVisible(e, !1)), e.__visible = !1), e.__active && (this.invokeOnePlugin((t) => t.setTileActive && t.setTileActive(e, !1)), e.__active = !1);
   }
   preprocessNode(e, t, r = null) {
-    var n;
-    if (this.processedTiles.add(e), e.content && (!("uri" in e.content) && "url" in e.content && (e.content.uri = e.content.url, delete e.content.url), e.content.boundingVolume && !("box" in e.content.boundingVolume || "sphere" in e.content.boundingVolume || "region" in e.content.boundingVolume) && delete e.content.boundingVolume), e.parent = r, e.children = e.children || [], (n = e.content) != null && n.uri) {
+    var s;
+    if (this.processedTiles.add(e), e.content && (!("uri" in e.content) && "url" in e.content && (e.content.uri = e.content.url, delete e.content.url), e.content.boundingVolume && !("box" in e.content.boundingVolume || "sphere" in e.content.boundingVolume || "region" in e.content.boundingVolume) && delete e.content.boundingVolume), e.parent = r, e.children = e.children || [], (s = e.content) != null && s.uri) {
       const o = Q(e.content.uri);
       e.__hasContent = !0, e.__hasUnrenderableContent = !!(o && /json$/.test(o)), e.__hasRenderableContent = !e.__hasUnrenderableContent;
     } else
       e.__hasContent = !1, e.__hasUnrenderableContent = !1, e.__hasRenderableContent = !1;
-    e.__childrenProcessed = 0, r && r.__childrenProcessed++, e.__distanceFromCamera = 1 / 0, e.__error = 1 / 0, e.__inFrustum = !1, e.__isLeaf = !1, e.__usedLastFrame = !1, e.__used = !1, e.__wasSetVisible = !1, e.__visible = !1, e.__allChildrenReady = !1, e.__wasSetActive = !1, e.__active = !1, e.__loadingState = g, r === null ? (e.__depth = 0, e.__depthFromRenderedParent = e.__hasRenderableContent ? 1 : 0, e.refine = e.refine || "REPLACE") : (e.__depth = r.__depth + 1, e.__depthFromRenderedParent = r.__depthFromRenderedParent + (e.__hasRenderableContent ? 1 : 0), e.refine = e.refine || r.refine), e.__basePath = t, e.__lastFrameVisited = -1, this.invokeAllPlugins((o) => {
+    e.__childrenProcessed = 0, r && r.__childrenProcessed++, e.__distanceFromCamera = 1 / 0, e.__error = 1 / 0, e.__inFrustum = !1, e.__isLeaf = !1, e.__usedLastFrame = !1, e.__used = !1, e.__wasSetVisible = !1, e.__visible = !1, e.__allChildrenReady = !1, e.__wasSetActive = !1, e.__active = !1, e.__loadingState = T, r === null ? (e.__depth = 0, e.__depthFromRenderedParent = e.__hasRenderableContent ? 1 : 0, e.refine = e.refine || "REPLACE") : (e.__depth = r.__depth + 1, e.__depthFromRenderedParent = r.__depthFromRenderedParent + (e.__hasRenderableContent ? 1 : 0), e.refine = e.refine || r.refine), e.__basePath = t, e.__lastFrameVisited = -1, this.invokeAllPlugins((o) => {
       o !== this && o.preprocessNode && o.preprocessNode(e, t, r);
     });
   }
@@ -323,9 +325,16 @@ class le {
   }
   calculateTileViewError(e, t) {
   }
+  removeUnusedPendingTiles() {
+    const { lruCache: e, loadingTiles: t } = this, r = [];
+    for (const s of t)
+      !e.isUsed(s) && s.__loadingState === L && r.push(s);
+    for (let s = 0; s < r.length; s++)
+      e.remove(r[s]);
+  }
   // Private Functions
   queueTileForDownload(e) {
-    e.__loadingState !== g || this.lruCache.isFull() || this.queuedTiles.push(e);
+    e.__loadingState !== T || this.lruCache.isFull() || this.queuedTiles.push(e);
   }
   markTileUsed(e) {
     this.usedSet.add(e), this.lruCache.markUsed(e);
@@ -335,8 +344,8 @@ class le {
   }
   ensureChildrenArePreprocessed(e, t = !1) {
     const r = e.children;
-    for (let n = 0, o = r.length; n < o; n++) {
-      const a = r[n];
+    for (let s = 0, o = r.length; s < o; s++) {
+      const a = r[s];
       if ("__depth" in a)
         break;
       t ? (this.processNodeQueue.remove(a), this.preprocessNode(a, e.__basePath, e)) : this.processNodeQueue.has(a) || this.processNodeQueue.add(a, (l) => {
@@ -354,13 +363,13 @@ class le {
   // force a recalculation of the tile or all tiles if no tile is provided
   recalculateBytesUsed(e = null) {
     const { lruCache: t, processedTiles: r } = this;
-    e === null ? t.itemSet.forEach((n) => {
-      r.has(n) && t.setMemoryUsage(n, this.getBytesUsed(n));
+    e === null ? t.itemSet.forEach((s) => {
+      r.has(s) && t.setMemoryUsage(s, this.getBytesUsed(s));
     }) : t.setMemoryUsage(e, this.getBytesUsed(e));
   }
   preprocessTileset(e, t, r = null) {
-    const n = Object.getPrototypeOf(this);
-    Object.hasOwn(n, "preprocessTileSet") && console.warn(`${n.constructor.name}: Class overrides deprecated "preprocessTileSet" method. Please rename to "preprocessTileset".`);
+    const s = Object.getPrototypeOf(this);
+    Object.hasOwn(s, "preprocessTileSet") && console.warn(`${s.constructor.name}: Class overrides deprecated "preprocessTileSet" method. Please rename to "preprocessTileset".`);
     const o = e.asset.version, [a, l] = o.split(".").map((h) => parseInt(h));
     console.assert(
       a <= 1,
@@ -376,47 +385,48 @@ class le {
     const e = Object.getPrototypeOf(this);
     Object.hasOwn(e, "loadRootTileSet") && console.warn(`${e.constructor.name}: Class overrides deprecated "loadRootTileSet" method. Please rename to "loadRootTileset".`);
     let t = this.rootURL;
-    return this.invokeAllPlugins((n) => t = n.preprocessURL ? n.preprocessURL(t, null) : t), this.cachedRootJson ? Promise.resolve(this.cachedRootJson).then((n) => (this.preprocessTileset(n, t), n)) : this.invokeOnePlugin((n) => n.fetchData && n.fetchData(t, this.fetchOptions)).then((n) => {
-      if (n instanceof Response) {
-        if (n.ok)
-          return n.json();
-        throw new Error(`TilesRenderer: Failed to load tileset "${t}" with status ${n.status} : ${n.statusText}`);
-      } else return n;
-    }).then((n) => (this.preprocessTileset(n, t), n));
+    return this.invokeAllPlugins((s) => t = s.preprocessURL ? s.preprocessURL(t, null) : t), this.cachedRootJson ? Promise.resolve(this.cachedRootJson).then((s) => (this.preprocessTileset(s, t), s)) : this.invokeOnePlugin((s) => s.fetchData && s.fetchData(t, this.fetchOptions)).then((s) => {
+      if (s instanceof Response) {
+        if (s.ok)
+          return s.json();
+        throw new Error(`TilesRenderer: Failed to load tileset "${t}" with status ${s.status} : ${s.statusText}`);
+      } else return s;
+    }).then((s) => (this.preprocessTileset(s, t), s));
   }
   loadRootTileSet(...e) {
     return console.warn('TilesRenderer: "loadRootTileSet" has been deprecated. Use "loadRootTileset" instead.'), this.loadRootTileSet(...e);
   }
   requestTileContents(e) {
-    if (e.__loadingState !== g)
+    if (e.__loadingState !== T)
       return;
-    let t = !1, r = null, n = new URL(e.content.uri, e.__basePath + "/").toString();
-    this.invokeAllPlugins((d) => n = d.preprocessURL ? d.preprocessURL(n, e) : n);
-    const o = this.stats, a = this.lruCache, l = this.downloadQueue, i = this.parseQueue, h = Q(n), c = new AbortController(), u = c.signal;
+    let t = !1, r = null, s = new URL(e.content.uri, e.__basePath + "/").toString();
+    this.invokeAllPlugins((d) => s = d.preprocessURL ? d.preprocessURL(s, e) : s);
+    const o = this.stats, a = this.lruCache, l = this.downloadQueue, i = this.parseQueue, h = this.loadingTiles, c = Q(s), u = new AbortController(), f = u.signal;
     if (a.add(e, (d) => {
-      c.abort(), t ? (d.children.length = 0, d.__childrenProcessed = 0) : this.invokeAllPlugins((_) => {
-        _.disposeTile && _.disposeTile(d);
-      }), o.inCache--, this.cachedSinceLoadComplete.has(e) && (this.cachedSinceLoadComplete.delete(e), o.inCacheSinceLoad--), d.__loadingState === w ? o.downloading-- : d.__loadingState === A && o.parsing--, d.__loadingState = g, i.remove(d), l.remove(d);
+      u.abort(), t ? (d.children.length = 0, d.__childrenProcessed = 0) : this.invokeAllPlugins((p) => {
+        p.disposeTile && p.disposeTile(d);
+      }), o.inCache--, this.cachedSinceLoadComplete.has(e) && (this.cachedSinceLoadComplete.delete(e), o.inCacheSinceLoad--), d.__loadingState === L ? o.queued-- : d.__loadingState === w ? o.downloading-- : d.__loadingState === B && o.parsing--, d.__loadingState = T, i.remove(d), l.remove(d), h.delete(d);
     }))
-      return this.isLoading || (this.isLoading = !0, this.dispatchEvent({ type: "tiles-load-start" })), a.setMemoryUsage(e, this.getBytesUsed(e)), this.cachedSinceLoadComplete.add(e), o.inCacheSinceLoad++, o.inCache++, o.downloading++, e.__loadingState = w, l.add(e, (d) => {
-        if (u.aborted)
+      return this.isLoading || (this.isLoading = !0, this.dispatchEvent({ type: "tiles-load-start" })), a.setMemoryUsage(e, this.getBytesUsed(e)), this.cachedSinceLoadComplete.add(e), o.inCacheSinceLoad++, o.inCache++, o.queued++, e.__loadingState = L, h.add(e), l.add(e, (d) => {
+        if (f.aborted)
           return Promise.resolve();
-        const _ = this.invokeOnePlugin((p) => p.fetchData && p.fetchData(n, { ...this.fetchOptions, signal: u }));
-        return this.dispatchEvent({ type: "tile-download-start", tile: e, uri: n }), _;
+        e.__loadingState = w, o.downloading++, o.queued--;
+        const p = this.invokeOnePlugin((g) => g.fetchData && g.fetchData(s, { ...this.fetchOptions, signal: f }));
+        return this.dispatchEvent({ type: "tile-download-start", tile: e, uri: s }), p;
       }).then((d) => {
-        if (!u.aborted)
+        if (!f.aborted)
           if (d instanceof Response) {
             if (d.ok)
-              return h === "json" ? d.json() : d.arrayBuffer();
+              return c === "json" ? d.json() : d.arrayBuffer();
             throw new Error(`Failed to load model with error code ${d.status}`);
           } else return d;
       }).then((d) => {
-        if (!u.aborted)
-          return o.downloading--, o.parsing++, e.__loadingState = A, i.add(e, (_) => u.aborted ? Promise.resolve() : h === "json" && d.root ? (this.preprocessTileset(d, n, e), e.children.push(d.root), r = d, t = !0, Promise.resolve()) : this.invokeOnePlugin((p) => p.parseTile && p.parseTile(d, _, h, n, u)));
+        if (!f.aborted)
+          return o.downloading--, o.parsing++, e.__loadingState = B, i.add(e, (p) => f.aborted ? Promise.resolve() : c === "json" && d.root ? (this.preprocessTileset(d, s, e), e.children.push(d.root), r = d, t = !0, Promise.resolve()) : this.invokeOnePlugin((g) => g.parseTile && g.parseTile(d, p, c, s, f)));
       }).then(() => {
-        if (u.aborted)
+        if (f.aborted)
           return;
-        o.parsing--, e.__loadingState = y, a.setLoaded(e, !0);
+        o.parsing--, e.__loadingState = v, h.delete(e), a.setLoaded(e, !0);
         const d = this.getBytesUsed(e);
         if (a.getMemoryUsage(e) === 0 && d > 0 && a.isFull()) {
           a.remove(e);
@@ -425,24 +435,24 @@ class le {
         a.setMemoryUsage(e, d), this.dispatchEvent({ type: "needs-update" }), this.dispatchEvent({ type: "load-content" }), t && this.dispatchEvent({
           type: "load-tileset",
           tileset: r,
-          url: n
+          url: s
         }), e.cached.scene && this.dispatchEvent({
           type: "load-model",
           scene: e.cached.scene,
           tile: e,
-          url: n
+          url: s
         });
       }).catch((d) => {
-        u.aborted || (d.name !== "AbortError" ? (i.remove(e), l.remove(e), e.__loadingState === A ? o.parsing-- : e.__loadingState === w && o.downloading--, o.failed++, console.error(`TilesRenderer : Failed to load tile at url "${e.content.uri}".`), console.error(d), e.__loadingState = b, a.setLoaded(e, !0), this.dispatchEvent({
+        f.aborted || (d.name !== "AbortError" ? (i.remove(e), l.remove(e), e.__loadingState === L ? o.queued-- : e.__loadingState === B ? o.parsing-- : e.__loadingState === w && o.downloading--, o.failed++, console.error(`TilesRenderer : Failed to load tile at url "${e.content.uri}".`), console.error(d), e.__loadingState = y, h.delete(e), a.setLoaded(e, !0), this.dispatchEvent({
           type: "load-error",
           tile: e,
           error: d,
-          url: n
+          url: s
         })) : a.remove(e));
       });
   }
 }
-function X(s, e, t, r, n, o) {
+function Z(n, e, t, r, s, o) {
   let a;
   switch (r) {
     case "SCALAR":
@@ -462,39 +472,39 @@ function X(s, e, t, r, n, o) {
   }
   let l;
   const i = t * a;
-  switch (n) {
+  switch (s) {
     case "BYTE":
-      l = new Int8Array(s, e, i);
+      l = new Int8Array(n, e, i);
       break;
     case "UNSIGNED_BYTE":
-      l = new Uint8Array(s, e, i);
+      l = new Uint8Array(n, e, i);
       break;
     case "SHORT":
-      l = new Int16Array(s, e, i);
+      l = new Int16Array(n, e, i);
       break;
     case "UNSIGNED_SHORT":
-      l = new Uint16Array(s, e, i);
+      l = new Uint16Array(n, e, i);
       break;
     case "INT":
-      l = new Int32Array(s, e, i);
+      l = new Int32Array(n, e, i);
       break;
     case "UNSIGNED_INT":
-      l = new Uint32Array(s, e, i);
+      l = new Uint32Array(n, e, i);
       break;
     case "FLOAT":
-      l = new Float32Array(s, e, i);
+      l = new Float32Array(n, e, i);
       break;
     case "DOUBLE":
-      l = new Float64Array(s, e, i);
+      l = new Float64Array(n, e, i);
       break;
     default:
       throw new Error(`FeatureTable : Feature component type not provided for "${o}".`);
   }
   return l;
 }
-class P {
-  constructor(e, t, r, n) {
-    this.buffer = e, this.binOffset = t + r, this.binLength = n;
+class R {
+  constructor(e, t, r, s) {
+    this.buffer = e, this.binOffset = t + r, this.binLength = s;
     let o = null;
     if (r !== 0) {
       const a = new Uint8Array(e, t, r);
@@ -506,7 +516,7 @@ class P {
   getKeys() {
     return Object.keys(this.header).filter((e) => e !== "extensions");
   }
-  getData(e, t, r = null, n = null) {
+  getData(e, t, r = null, s = null) {
     const o = this.header;
     if (!(e in o))
       return null;
@@ -515,47 +525,47 @@ class P {
       if (Array.isArray(a))
         return a;
       {
-        const { buffer: l, binOffset: i, binLength: h } = this, c = a.byteOffset || 0, u = a.type || n, f = a.componentType || r;
-        if ("type" in a && n && a.type !== n)
+        const { buffer: l, binOffset: i, binLength: h } = this, c = a.byteOffset || 0, u = a.type || s, f = a.componentType || r;
+        if ("type" in a && s && a.type !== s)
           throw new Error("FeatureTable: Specified type does not match expected type.");
-        const d = i + c, _ = X(l, d, t, u, f, e);
-        if (d + _.byteLength > i + h)
+        const _ = i + c, d = Z(l, _, t, u, f, e);
+        if (_ + d.byteLength > i + h)
           throw new Error("FeatureTable: Feature data read outside binary body length.");
-        return _;
+        return d;
       }
     } else return a;
   }
   getBuffer(e, t) {
-    const { buffer: r, binOffset: n } = this;
-    return r.slice(n + e, n + e + t);
+    const { buffer: r, binOffset: s } = this;
+    return r.slice(s + e, s + e + t);
   }
 }
-class oe {
+class ae {
   constructor(e) {
     this.batchTable = e;
     const t = e.header.extensions["3DTILES_batch_table_hierarchy"];
     this.classes = t.classes;
-    for (const n of this.classes) {
-      const o = n.instances;
+    for (const s of this.classes) {
+      const o = s.instances;
       for (const a in o)
-        n.instances[a] = this._parseProperty(o[a], n.length, a);
+        s.instances[a] = this._parseProperty(o[a], s.length, a);
     }
     if (this.instancesLength = t.instancesLength, this.classIds = this._parseProperty(t.classIds, this.instancesLength, "classIds"), t.parentCounts ? this.parentCounts = this._parseProperty(t.parentCounts, this.instancesLength, "parentCounts") : this.parentCounts = new Array(this.instancesLength).fill(1), t.parentIds) {
-      const n = this.parentCounts.reduce((o, a) => o + a, 0);
-      this.parentIds = this._parseProperty(t.parentIds, n, "parentIds");
+      const s = this.parentCounts.reduce((o, a) => o + a, 0);
+      this.parentIds = this._parseProperty(t.parentIds, s, "parentIds");
     } else
       this.parentIds = null;
     this.instancesIds = [];
     const r = {};
-    for (const n of this.classIds)
-      r[n] = r[n] ?? 0, this.instancesIds.push(r[n]), r[n]++;
+    for (const s of this.classIds)
+      r[s] = r[s] ?? 0, this.instancesIds.push(r[s]), r[s]++;
   }
   _parseProperty(e, t, r) {
     if (Array.isArray(e))
       return e;
     {
-      const { buffer: n, binOffset: o } = this.batchTable, a = e.byteOffset, l = e.componentType || "UNSIGNED_SHORT", i = o + a;
-      return X(n, i, t, "SCALAR", l, r);
+      const { buffer: s, binOffset: o } = this.batchTable, a = e.byteOffset, l = e.componentType || "UNSIGNED_SHORT", i = o + a;
+      return Z(s, i, t, "SCALAR", l, r);
     }
   }
   getDataFromId(e, t = {}) {
@@ -569,20 +579,20 @@ class oe {
         c !== e && this.getDataFromId(c, t);
       }
     }
-    const n = this.classIds[e], o = this.classes[n].instances, a = this.classes[n].name, l = this.instancesIds[e];
+    const s = this.classIds[e], o = this.classes[s].instances, a = this.classes[s].name, l = this.instancesIds[e];
     for (const i in o)
       t[a] = t[a] || {}, t[a][i] = o[i][l];
     return t;
   }
 }
-class N extends P {
+class V extends R {
   get batchSize() {
     return console.warn("BatchTable.batchSize has been deprecated and replaced with BatchTable.count."), this.count;
   }
-  constructor(e, t, r, n, o) {
-    super(e, r, n, o), this.count = t, this.extensions = {};
+  constructor(e, t, r, s, o) {
+    super(e, r, s, o), this.count = t, this.extensions = {};
     const a = this.header.extensions;
-    a && a["3DTILES_batch_table_hierarchy"] && (this.extensions["3DTILES_batch_table_hierarchy"] = new oe(this));
+    a && a["3DTILES_batch_table_hierarchy"] && (this.extensions["3DTILES_batch_table_hierarchy"] = new ae(this));
   }
   getData(e, t = null, r = null) {
     return console.warn("BatchTable: BatchTable.getData is deprecated. Use BatchTable.getDataFromId to get allproperties for an id or BatchTable.getPropertyArray for getting an array of value for a property."), super.getData(e, this.count, t, r);
@@ -593,8 +603,8 @@ class N extends P {
     for (const r of this.getKeys())
       t[r] = super.getData(r, this.count)[e];
     for (const r in this.extensions) {
-      const n = this.extensions[r];
-      n.getDataFromId instanceof Function && (t[r] = t[r] || {}, n.getDataFromId(e, t[r]));
+      const s = this.extensions[r];
+      s.getDataFromId instanceof Function && (t[r] = t[r] || {}, s.getDataFromId(e, t[r]));
     }
     return t;
   }
@@ -602,164 +612,165 @@ class N extends P {
     return super.getData(e, this.count);
   }
 }
-class ce extends U {
+class de extends P {
   parse(e) {
-    const t = new DataView(e), r = v(t);
+    const t = new DataView(e), r = S(t);
     console.assert(r === "b3dm");
-    const n = t.getUint32(4, !0);
-    console.assert(n === 1);
+    const s = t.getUint32(4, !0);
+    console.assert(s === 1);
     const o = t.getUint32(8, !0);
     console.assert(o === e.byteLength);
     const a = t.getUint32(12, !0), l = t.getUint32(16, !0), i = t.getUint32(20, !0), h = t.getUint32(24, !0), c = 28, u = e.slice(
       c,
       c + a + l
-    ), f = new P(
+    ), f = new R(
       u,
       0,
       a,
       l
-    ), d = c + a + l, _ = e.slice(
-      d,
-      d + i + h
-    ), p = new N(
+    ), _ = c + a + l, d = e.slice(
       _,
+      _ + i + h
+    ), p = new V(
+      d,
       f.getData("BATCH_LENGTH"),
       0,
       i,
       h
-    ), S = d + i + h, C = new Uint8Array(e, S, o - S);
+    ), g = _ + i + h, C = new Uint8Array(e, g, o - g);
     return {
-      version: n,
+      version: s,
       featureTable: f,
       batchTable: p,
       glbBytes: C
     };
   }
 }
-class de extends U {
+class he extends P {
   parse(e) {
-    const t = new DataView(e), r = v(t);
+    const t = new DataView(e), r = S(t);
     console.assert(r === "i3dm");
-    const n = t.getUint32(4, !0);
-    console.assert(n === 1);
+    const s = t.getUint32(4, !0);
+    console.assert(s === 1);
     const o = t.getUint32(8, !0);
     console.assert(o === e.byteLength);
     const a = t.getUint32(12, !0), l = t.getUint32(16, !0), i = t.getUint32(20, !0), h = t.getUint32(24, !0), c = t.getUint32(28, !0), u = 32, f = e.slice(
       u,
       u + a + l
-    ), d = new P(
+    ), _ = new R(
       f,
       0,
       a,
       l
-    ), _ = u + a + l, p = e.slice(
-      _,
-      _ + i + h
-    ), S = new N(
+    ), d = u + a + l, p = e.slice(
+      d,
+      d + i + h
+    ), g = new V(
       p,
-      d.getData("INSTANCES_LENGTH"),
+      _.getData("INSTANCES_LENGTH"),
       0,
       i,
       h
-    ), C = _ + i + h, V = new Uint8Array(e, C, o - C);
-    let R = null, F = null, G = null;
+    ), C = d + i + h, q = new Uint8Array(e, C, o - C);
+    let F = null, E = null, G = null;
     if (c)
-      R = V, F = Promise.resolve();
+      F = q, E = Promise.resolve();
     else {
-      const E = this.resolveExternalURL(H(V));
-      G = te(E), F = fetch(E, this.fetchOptions).then((m) => {
-        if (!m.ok)
-          throw new Error(`I3DMLoaderBase : Failed to load file "${E}" with status ${m.status} : ${m.statusText}`);
-        return m.arrayBuffer();
-      }).then((m) => {
-        R = new Uint8Array(m);
+      const I = this.resolveExternalURL(H(q));
+      G = se(I), E = fetch(I, this.fetchOptions).then((b) => {
+        if (!b.ok)
+          throw new Error(`I3DMLoaderBase : Failed to load file "${I}" with status ${b.status} : ${b.statusText}`);
+        return b.arrayBuffer();
+      }).then((b) => {
+        F = new Uint8Array(b);
       });
     }
-    return F.then(() => ({
-      version: n,
-      featureTable: d,
-      batchTable: S,
-      glbBytes: R,
+    return E.then(() => ({
+      version: s,
+      featureTable: _,
+      batchTable: g,
+      glbBytes: F,
       gltfWorkingPath: G
     }));
   }
 }
-class he extends U {
+class ue extends P {
   parse(e) {
-    const t = new DataView(e), r = v(t);
+    const t = new DataView(e), r = S(t);
     console.assert(r === "pnts");
-    const n = t.getUint32(4, !0);
-    console.assert(n === 1);
+    const s = t.getUint32(4, !0);
+    console.assert(s === 1);
     const o = t.getUint32(8, !0);
     console.assert(o === e.byteLength);
     const a = t.getUint32(12, !0), l = t.getUint32(16, !0), i = t.getUint32(20, !0), h = t.getUint32(24, !0), c = 28, u = e.slice(
       c,
       c + a + l
-    ), f = new P(
+    ), f = new R(
       u,
       0,
       a,
       l
-    ), d = c + a + l, _ = e.slice(
-      d,
-      d + i + h
-    ), p = new N(
+    ), _ = c + a + l, d = e.slice(
       _,
+      _ + i + h
+    ), p = new V(
+      d,
       f.getData("BATCH_LENGTH") || f.getData("POINTS_LENGTH"),
       0,
       i,
       h
     );
     return Promise.resolve({
-      version: n,
+      version: s,
       featureTable: f,
       batchTable: p
     });
   }
 }
-class ue extends U {
+class fe extends P {
   parse(e) {
-    const t = new DataView(e), r = v(t);
+    const t = new DataView(e), r = S(t);
     console.assert(r === "cmpt", 'CMPTLoader: The magic bytes equal "cmpt".');
-    const n = t.getUint32(4, !0);
-    console.assert(n === 1, 'CMPTLoader: The version listed in the header is "1".');
+    const s = t.getUint32(4, !0);
+    console.assert(s === 1, 'CMPTLoader: The version listed in the header is "1".');
     const o = t.getUint32(8, !0);
     console.assert(o === e.byteLength, "CMPTLoader: The contents buffer length listed in the header matches the file.");
     const a = t.getUint32(12, !0), l = [];
     let i = 16;
     for (let h = 0; h < a; h++) {
-      const c = new DataView(e, i, 12), u = v(c), f = c.getUint32(4, !0), d = c.getUint32(8, !0), _ = new Uint8Array(e, i, d);
+      const c = new DataView(e, i, 12), u = S(c), f = c.getUint32(4, !0), _ = c.getUint32(8, !0), d = new Uint8Array(e, i, _);
       l.push({
         type: u,
-        buffer: _,
+        buffer: d,
         version: f
-      }), i += d;
+      }), i += _;
     }
     return {
-      version: n,
+      version: s,
       tiles: l
     };
   }
 }
 export {
-  ce as B3DMLoaderBase,
-  ue as CMPTLoaderBase,
-  b as FAILED,
-  de as I3DMLoaderBase,
-  y as LOADED,
+  de as B3DMLoaderBase,
+  fe as CMPTLoaderBase,
+  y as FAILED,
+  he as I3DMLoaderBase,
+  v as LOADED,
   w as LOADING,
-  Z as LRUCache,
-  U as LoaderBase,
-  ye as LoaderUtils,
-  A as PARSING,
-  he as PNTSLoaderBase,
-  I as PriorityQueue,
-  pe as PriorityQueueItemRemovedError,
-  le as TilesRendererBase,
-  ve as TraversalUtils,
-  g as UNLOADED,
-  ge as WGS84_FLATTENING,
-  Te as WGS84_HEIGHT,
-  me as WGS84_RADIUS
+  ee as LRUCache,
+  P as LoaderBase,
+  ve as LoaderUtils,
+  B as PARSING,
+  ue as PNTSLoaderBase,
+  A as PriorityQueue,
+  ge as PriorityQueueItemRemovedError,
+  L as QUEUED,
+  ce as TilesRendererBase,
+  Se as TraversalUtils,
+  T as UNLOADED,
+  Te as WGS84_FLATTENING,
+  me as WGS84_HEIGHT,
+  be as WGS84_RADIUS
 };
 //# sourceMappingURL=index.core.js.map
