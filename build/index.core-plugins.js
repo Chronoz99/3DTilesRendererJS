@@ -1,29 +1,45 @@
-import { C as E, b as R, a as N, G as U, Q as S, z as M } from "./QuantizedMeshLoaderBase-DmrZgwB-.js";
-import { L as m, r as g, c as v } from "./LoaderBase-CfTLVHyZ.js";
-function _(u) {
-  return u.__implicitRoot.implicitTiling.subdivisionScheme === "OCTREE";
+import { C as I, b as N, a as U, G as S, Q as R, z as V } from "./QuantizedMeshLoaderBase-5NpHK4Vw.js";
+import { L as d, r as T, b as v } from "./LoaderBase-2yhE3Jur.js";
+function p(u) {
+  return u.implicitTilingData.root.implicitTiling.subdivisionScheme === "OCTREE";
 }
-function d(u) {
-  return _(u) ? 8 : 4;
+function m(u) {
+  return p(u) ? 8 : 4;
 }
-function y(u, e) {
-  if (!e)
+function y(u, i) {
+  if (!u)
     return [0, 0, 0];
-  const i = 2 * e.__x + u.__subtreeIdx % 2, t = 2 * e.__y + Math.floor(u.__subtreeIdx / 2) % 2, r = _(u) ? 2 * e.__z + Math.floor(u.__subtreeIdx / 4) % 2 : 0;
-  return [i, t, r];
+  const e = u.implicitTilingData.x, t = u.implicitTilingData.y, r = u.implicitTilingData.z, n = 2 * e + i % 2, s = 2 * t + Math.floor(i / 2) % 2, l = p(u) ? 2 * r + Math.floor(i / 4) % 2 : 0;
+  return [n, s, l];
 }
-class p {
-  constructor(e, i) {
-    this.parent = e, this.children = [], this.__level = e.__level + 1, this.__implicitRoot = e.__implicitRoot, this.__subtreeIdx = i, [this.__x, this.__y, this.__z] = y(this, e);
+class b {
+  constructor(i, e) {
+    this.parent = i, this.children = [], this.geometricError = 0, this.boundingVolume = null;
+    const [t, r, n] = y(i, e);
+    this.implicitTilingData = {
+      level: i.implicitTilingData.level + 1,
+      root: i.implicitTilingData.root,
+      subtreeIdx: e,
+      x: t,
+      y: r,
+      z: n
+    };
   }
-  static copy(e) {
-    const i = {};
-    return i.children = [], i.__level = e.__level, i.__implicitRoot = e.__implicitRoot, i.__subtreeIdx = e.__subtreeIdx, [i.__x, i.__y, i.__z] = [e.__x, e.__y, e.__z], i.boundingVolume = e.boundingVolume, i.geometricError = e.geometricError, i;
+  static clone(i) {
+    return {
+      parent: i.parent,
+      children: [],
+      geometricError: i.geometricError,
+      boundingVolume: i.boundingVolume,
+      implicitTilingData: {
+        ...i.implicitTilingData
+      }
+    };
   }
 }
-class A extends m {
-  constructor(e) {
-    super(), this.tile = e, this.rootTile = e.__implicitRoot, this.workingPath = null;
+class A extends d {
+  constructor(i) {
+    super(), this.tile = i, this.rootTile = i.implicitTilingData.root, this.workingPath = null;
   }
   /**
    * A helper object for storing the two parts of the subtree binary
@@ -39,39 +55,39 @@ class A extends m {
    * @param buffer
    * @return {Subtree}
    */
-  parseBuffer(e) {
-    const i = new DataView(e);
+  parseBuffer(i) {
+    const e = new DataView(i);
     let t = 0;
-    const r = g(i);
+    const r = T(e);
     console.assert(r === "subt", 'SUBTREELoader: The magic bytes equal "subt".'), t += 4;
-    const s = i.getUint32(t, !0);
-    console.assert(s === 1, 'SUBTREELoader: The version listed in the header is "1".'), t += 4;
-    const n = i.getUint32(t, !0);
+    const n = e.getUint32(t, !0);
+    console.assert(n === 1, 'SUBTREELoader: The version listed in the header is "1".'), t += 4;
+    const s = e.getUint32(t, !0);
     t += 8;
-    const o = i.getUint32(t, !0);
+    const l = e.getUint32(t, !0);
     t += 8;
-    const l = JSON.parse(v(new Uint8Array(e, t, n)));
-    t += n;
-    const a = e.slice(t, t + o);
+    const o = JSON.parse(v(new Uint8Array(i, t, s)));
+    t += s;
+    const a = i.slice(t, t + l);
     return {
-      version: s,
-      subtreeJson: l,
+      version: n,
+      subtreeJson: o,
       subtreeByte: a
     };
   }
-  async parse(e) {
-    const i = this.parseBuffer(e), t = i.subtreeJson;
+  async parse(i) {
+    const e = this.parseBuffer(i), t = e.subtreeJson;
     t.contentAvailabilityHeaders = [].concat(t.contentAvailability);
-    const r = this.preprocessBuffers(t.buffers), s = this.preprocessBufferViews(
+    const r = this.preprocessBuffers(t.buffers), n = this.preprocessBufferViews(
       t.bufferViews,
       r
     );
-    this.markActiveBufferViews(t, s);
-    const n = await this.requestActiveBuffers(
+    this.markActiveBufferViews(t, n);
+    const s = await this.requestActiveBuffers(
       r,
-      i.subtreeByte
-    ), o = this.parseActiveBufferViews(s, n);
-    this.parseAvailability(i, t, o), this.expandSubtree(this.tile, i);
+      e.subtreeByte
+    ), l = this.parseActiveBufferViews(n, s);
+    this.parseAvailability(e, t, l), this.expandSubtree(this.tile, e);
   }
   /**
    * Determine which buffer views need to be loaded into memory. This includes:
@@ -90,16 +106,16 @@ class A extends m {
    * @param {BufferViewHeader[]} bufferViewHeaders The preprocessed buffer view headers
    * @private
    */
-  markActiveBufferViews(e, i) {
+  markActiveBufferViews(i, e) {
     let t;
-    const r = e.tileAvailability;
-    isNaN(r.bitstream) ? isNaN(r.bufferView) || (t = i[r.bufferView]) : t = i[r.bitstream], t && (t.isActive = !0, t.bufferHeader.isActive = !0);
-    const s = e.contentAvailabilityHeaders;
-    for (let o = 0; o < s.length; o++)
-      t = void 0, isNaN(s[o].bitstream) ? isNaN(s[o].bufferView) || (t = i[s[o].bufferView]) : t = i[s[o].bitstream], t && (t.isActive = !0, t.bufferHeader.isActive = !0);
+    const r = i.tileAvailability;
+    isNaN(r.bitstream) ? isNaN(r.bufferView) || (t = e[r.bufferView]) : t = e[r.bitstream], t && (t.isActive = !0, t.bufferHeader.isActive = !0);
+    const n = i.contentAvailabilityHeaders;
+    for (let l = 0; l < n.length; l++)
+      t = void 0, isNaN(n[l].bitstream) ? isNaN(n[l].bufferView) || (t = e[n[l].bufferView]) : t = e[n[l].bitstream], t && (t.isActive = !0, t.bufferHeader.isActive = !0);
     t = void 0;
-    const n = e.childSubtreeAvailability;
-    isNaN(n.bitstream) ? isNaN(n.bufferView) || (t = i[n.bufferView]) : t = i[n.bitstream], t && (t.isActive = !0, t.bufferHeader.isActive = !0);
+    const s = i.childSubtreeAvailability;
+    isNaN(s.bitstream) ? isNaN(s.bufferView) || (t = e[s.bufferView]) : t = e[s.bitstream], t && (t.isActive = !0, t.bufferHeader.isActive = !0);
   }
   /**
    * Go through the list of buffers and gather all the active ones into
@@ -118,32 +134,32 @@ class A extends m {
    * @returns {object} buffersU8 A dictionary of buffer index to a Uint8Array of its contents.
    * @private
    */
-  async requestActiveBuffers(e, i) {
+  async requestActiveBuffers(i, e) {
     const t = [];
-    for (let n = 0; n < e.length; n++) {
-      const o = e[n];
-      if (!o.isActive)
+    for (let s = 0; s < i.length; s++) {
+      const l = i[s];
+      if (!l.isActive)
         t.push(Promise.resolve());
-      else if (o.isExternal) {
-        const l = this.parseImplicitURIBuffer(
+      else if (l.isExternal) {
+        const o = this.parseImplicitURIBuffer(
           this.tile,
           this.rootTile.implicitTiling.subtrees.uri,
-          o.uri
-        ), a = fetch(l, this.fetchOptions).then((c) => {
+          l.uri
+        ), a = fetch(o, this.fetchOptions).then((c) => {
           if (!c.ok)
-            throw new Error(`SUBTREELoader: Failed to load external buffer from ${o.uri} with error code ${c.status}.`);
+            throw new Error(`SUBTREELoader: Failed to load external buffer from ${l.uri} with error code ${c.status}.`);
           return c.arrayBuffer();
         }).then((c) => new Uint8Array(c));
         t.push(a);
       } else
-        t.push(Promise.resolve(new Uint8Array(i)));
+        t.push(Promise.resolve(new Uint8Array(e)));
     }
-    const r = await Promise.all(t), s = {};
-    for (let n = 0; n < r.length; n++) {
-      const o = r[n];
-      o && (s[n] = o);
+    const r = await Promise.all(t), n = {};
+    for (let s = 0; s < r.length; s++) {
+      const l = r[s];
+      l && (n[s] = l);
     }
-    return s;
+    return n;
   }
   /**
    * Go through the list of buffer views, and if they are marked as active,
@@ -154,14 +170,14 @@ class A extends m {
    * @returns {object} A dictionary of buffer view index to a Uint8Array of its contents.
    * @private
    */
-  parseActiveBufferViews(e, i) {
+  parseActiveBufferViews(i, e) {
     const t = {};
-    for (let r = 0; r < e.length; r++) {
-      const s = e[r];
-      if (!s.isActive)
+    for (let r = 0; r < i.length; r++) {
+      const n = i[r];
+      if (!n.isActive)
         continue;
-      const n = s.byteOffset, o = n + s.byteLength, l = i[s.buffer];
-      t[r] = l.slice(n, o);
+      const s = n.byteOffset, l = s + n.byteLength, o = e[n.buffer];
+      t[r] = o.slice(s, l);
     }
     return t;
   }
@@ -185,12 +201,12 @@ class A extends m {
    * @returns {BufferHeader[]} The same array of headers with additional fields.
    * @private
    */
-  preprocessBuffers(e = []) {
-    for (let i = 0; i < e.length; i++) {
-      const t = e[i];
+  preprocessBuffers(i = []) {
+    for (let e = 0; e < i.length; e++) {
+      const t = i[e];
       t.isActive = !1, t.isExternal = !!t.uri;
     }
-    return e;
+    return i;
   }
   /**
    * A buffer view header is the JSON header from the subtree JSON chunk plus
@@ -213,12 +229,12 @@ class A extends m {
    * @returns {BufferViewHeader[]} The same array of bufferView headers with additional fields.
    * @private
    */
-  preprocessBufferViews(e = [], i) {
-    for (let t = 0; t < e.length; t++) {
-      const r = e[t];
-      r.bufferHeader = i[r.buffer], r.isActive = !1, r.isExternal = r.bufferHeader.isExternal;
+  preprocessBufferViews(i = [], e) {
+    for (let t = 0; t < i.length; t++) {
+      const r = i[t];
+      r.bufferHeader = e[r.buffer], r.isActive = !1, r.isExternal = r.bufferHeader.isExternal;
     }
-    return e;
+    return i;
   }
   /**
    * Parse the three availability bitstreams and store them in the subtree.
@@ -228,26 +244,26 @@ class A extends m {
    * @param {Object} bufferViewsU8 A dictionary of buffer view index to a Uint8Array of its contents.
    * @private
    */
-  parseAvailability(e, i, t) {
-    const r = d(this.rootTile), s = this.rootTile.implicitTiling.subtreeLevels, n = (Math.pow(r, s) - 1) / (r - 1), o = Math.pow(r, s);
-    e._tileAvailability = this.parseAvailabilityBitstream(
-      i.tileAvailability,
+  parseAvailability(i, e, t) {
+    const r = m(this.rootTile), n = this.rootTile.implicitTiling.subtreeLevels, s = (Math.pow(r, n) - 1) / (r - 1), l = Math.pow(r, n);
+    i._tileAvailability = this.parseAvailabilityBitstream(
+      e.tileAvailability,
       t,
-      n
-    ), e._contentAvailabilityBitstreams = [];
-    for (let l = 0; l < i.contentAvailabilityHeaders.length; l++) {
+      s
+    ), i._contentAvailabilityBitstreams = [];
+    for (let o = 0; o < e.contentAvailabilityHeaders.length; o++) {
       const a = this.parseAvailabilityBitstream(
-        i.contentAvailabilityHeaders[l],
+        e.contentAvailabilityHeaders[o],
         t,
         // content availability has the same length as tile availability.
-        n
+        s
       );
-      e._contentAvailabilityBitstreams.push(a);
+      i._contentAvailabilityBitstreams.push(a);
     }
-    e._childSubtreeAvailability = this.parseAvailabilityBitstream(
-      i.childSubtreeAvailability,
+    i._childSubtreeAvailability = this.parseAvailabilityBitstream(
+      e.childSubtreeAvailability,
       t,
-      o
+      l
     );
   }
   /**
@@ -260,14 +276,14 @@ class A extends m {
    * @returns {object}
    * @private
    */
-  parseAvailabilityBitstream(e, i, t) {
-    if (!isNaN(e.constant))
+  parseAvailabilityBitstream(i, e, t) {
+    if (!isNaN(i.constant))
       return {
-        constant: !!e.constant,
+        constant: !!i.constant,
         lengthBits: t
       };
     let r;
-    return isNaN(e.bitstream) ? isNaN(e.bufferView) || (r = i[e.bufferView]) : r = i[e.bitstream], {
+    return isNaN(i.bitstream) ? isNaN(i.bufferView) || (r = e[i.bufferView]) : r = e[i.bitstream], {
       bitstream: r,
       lengthBits: t
     };
@@ -282,26 +298,26 @@ class A extends m {
    * @param {Subtree} subtree The parsed subtree.
    * @private
    */
-  expandSubtree(e, i) {
-    const t = p.copy(e);
-    for (let n = 0; i && n < i._contentAvailabilityBitstreams.length; n++)
-      if (i && this.getBit(i._contentAvailabilityBitstreams[n], 0)) {
-        t.content = { uri: this.parseImplicitURI(e, this.rootTile.content.uri) };
+  expandSubtree(i, e) {
+    const t = b.clone(i);
+    for (let s = 0; e && s < e._contentAvailabilityBitstreams.length; s++)
+      if (e && this.getBit(e._contentAvailabilityBitstreams[s], 0)) {
+        t.content = { uri: this.parseImplicitURI(i, this.rootTile.content.uri) };
         break;
       }
-    e.children.push(t);
+    i.children.push(t);
     const r = this.transcodeSubtreeTiles(
       t,
-      i
-    ), s = this.listChildSubtrees(i, r);
-    for (let n = 0; n < s.length; n++) {
-      const o = s[n], l = o.tile, a = this.deriveChildTile(
+      e
+    ), n = this.listChildSubtrees(e, r);
+    for (let s = 0; s < n.length; s++) {
+      const l = n[s], o = l.tile, a = this.deriveChildTile(
         null,
-        l,
+        o,
         null,
-        o.childMortonIndex
+        l.childMortonIndex
       );
-      a.content = { uri: this.parseImplicitURI(a, this.rootTile.implicitTiling.subtrees.uri) }, l.children.push(a);
+      a.content = { uri: this.parseImplicitURI(a, this.rootTile.implicitTiling.subtrees.uri) }, o.children.push(a);
     }
   }
   /**
@@ -314,23 +330,23 @@ class A extends m {
    * @returns {Array} The bottom row of transcoded tiles. This is helpful for processing child subtrees.
    * @private
    */
-  transcodeSubtreeTiles(e, i) {
-    let t = [e], r = [];
-    for (let s = 1; s < this.rootTile.implicitTiling.subtreeLevels; s++) {
-      const n = d(this.rootTile), o = (Math.pow(n, s) - 1) / (n - 1), l = n * t.length;
-      for (let a = 0; a < l; a++) {
-        const c = o + a, h = a >> Math.log2(n), f = t[h];
-        if (!this.getBit(i._tileAvailability, c)) {
+  transcodeSubtreeTiles(i, e) {
+    let t = [i], r = [];
+    for (let n = 1; n < this.rootTile.implicitTiling.subtreeLevels; n++) {
+      const s = m(this.rootTile), l = (Math.pow(s, n) - 1) / (s - 1), o = s * t.length;
+      for (let a = 0; a < o; a++) {
+        const c = l + a, h = a >> Math.log2(s), f = t[h];
+        if (!this.getBit(e._tileAvailability, c)) {
           r.push(void 0);
           continue;
         }
-        const b = this.deriveChildTile(
-          i,
+        const g = this.deriveChildTile(
+          e,
           f,
           c,
           a
         );
-        f.children.push(b), r.push(b);
+        f.children.push(g), r.push(g);
       }
       t = r, r = [];
     }
@@ -350,15 +366,15 @@ class A extends m {
    * @returns {SubtreeTile} The new child tile.
    * @private
    */
-  deriveChildTile(e, i, t, r) {
-    const s = new p(i, r);
-    s.boundingVolume = this.getTileBoundingVolume(s), s.geometricError = this.getGeometricError(s);
-    for (let n = 0; e && n < e._contentAvailabilityBitstreams.length; n++)
-      if (e && this.getBit(e._contentAvailabilityBitstreams[n], t)) {
-        s.content = { uri: this.parseImplicitURI(s, this.rootTile.content.uri) };
+  deriveChildTile(i, e, t, r) {
+    const n = new b(e, r);
+    n.boundingVolume = this.getTileBoundingVolume(n), n.geometricError = this.getGeometricError(n);
+    for (let s = 0; i && s < i._contentAvailabilityBitstreams.length; s++)
+      if (i && this.getBit(i._contentAvailabilityBitstreams[s], t)) {
+        n.content = { uri: this.parseImplicitURI(n, this.rootTile.content.uri) };
         break;
       }
-    return s;
+    return n;
   }
   /**
    * Get a bit from the bitstream as a Boolean. If the bitstream
@@ -369,13 +385,13 @@ class A extends m {
    * @returns {boolean} The value of the bit.
    * @private
    */
-  getBit(e, i) {
-    if (i < 0 || i >= e.lengthBits)
+  getBit(i, e) {
+    if (e < 0 || e >= i.lengthBits)
       throw new Error("Bit index out of bounds.");
-    if (e.constant !== void 0)
-      return e.constant;
-    const t = i >> 3, r = i % 8;
-    return (new Uint8Array(e.bitstream)[t] >> r & 1) === 1;
+    if (i.constant !== void 0)
+      return i.constant;
+    const t = e >> 3, r = e % 8;
+    return (new Uint8Array(i.bitstream)[t] >> r & 1) === 1;
   }
   /**
    * //TODO Adapt for Sphere
@@ -385,39 +401,39 @@ class A extends m {
    * @param {Object | SubtreeTile} tile
    * @return {Object} object containing the bounding volume.
    */
-  getTileBoundingVolume(e) {
-    const i = {};
+  getTileBoundingVolume(i) {
+    const e = {};
     if (this.rootTile.boundingVolume.region) {
-      const t = [...this.rootTile.boundingVolume.region], r = t[0], s = t[2], n = t[1], o = t[3], l = (s - r) / Math.pow(2, e.__level), a = (o - n) / Math.pow(2, e.__level);
-      t[0] = r + l * e.__x, t[2] = r + l * (e.__x + 1), t[1] = n + a * e.__y, t[3] = n + a * (e.__y + 1);
+      const t = [...this.rootTile.boundingVolume.region], r = t[0], n = t[2], s = t[1], l = t[3], o = (n - r) / Math.pow(2, i.implicitTilingData.level), a = (l - s) / Math.pow(2, i.implicitTilingData.level);
+      t[0] = r + o * i.implicitTilingData.x, t[2] = r + o * (i.implicitTilingData.x + 1), t[1] = s + a * i.implicitTilingData.y, t[3] = s + a * (i.implicitTilingData.y + 1);
       for (let c = 0; c < 4; c++) {
         const h = t[c];
         h < -Math.PI ? t[c] += 2 * Math.PI : h > Math.PI && (t[c] -= 2 * Math.PI);
       }
-      if (_(e)) {
-        const c = t[4], f = (t[5] - c) / Math.pow(2, e.__level);
-        t[4] = c + f * e.__z, t[5] = c + f * (e.__z + 1);
+      if (p(i)) {
+        const c = t[4], f = (t[5] - c) / Math.pow(2, i.implicitTilingData.level);
+        t[4] = c + f * i.implicitTilingData.z, t[5] = c + f * (i.implicitTilingData.z + 1);
       }
-      i.region = t;
+      e.region = t;
     }
     if (this.rootTile.boundingVolume.box) {
-      const t = [...this.rootTile.boundingVolume.box], r = 2 ** e.__level - 1, s = Math.pow(2, -e.__level), n = _(e) ? 3 : 2;
-      for (let o = 0; o < n; o++) {
-        t[3 + o * 3 + 0] *= s, t[3 + o * 3 + 1] *= s, t[3 + o * 3 + 2] *= s;
-        const l = t[3 + o * 3 + 0], a = t[3 + o * 3 + 1], c = t[3 + o * 3 + 2], h = o === 0 ? e.__x : o === 1 ? e.__y : e.__z;
-        t[0] += 2 * l * (-0.5 * r + h), t[1] += 2 * a * (-0.5 * r + h), t[2] += 2 * c * (-0.5 * r + h);
+      const t = [...this.rootTile.boundingVolume.box], r = 2 ** i.implicitTilingData.level - 1, n = Math.pow(2, -i.implicitTilingData.level), s = p(i) ? 3 : 2;
+      for (let l = 0; l < s; l++) {
+        t[3 + l * 3 + 0] *= n, t[3 + l * 3 + 1] *= n, t[3 + l * 3 + 2] *= n;
+        const o = t[3 + l * 3 + 0], a = t[3 + l * 3 + 1], c = t[3 + l * 3 + 2], h = l === 0 ? i.implicitTilingData.x : l === 1 ? i.implicitTilingData.y : i.implicitTilingData.z;
+        t[0] += 2 * o * (-0.5 * r + h), t[1] += 2 * a * (-0.5 * r + h), t[2] += 2 * c * (-0.5 * r + h);
       }
-      i.box = t;
+      e.box = t;
     }
-    return i;
+    return e;
   }
   /**
    * Each child’s geometricError is half of its parent’s geometricError.
    * @param {Object | SubtreeTile} tile
    * @return {number}
    */
-  getGeometricError(e) {
-    return this.rootTile.geometricError / Math.pow(2, e.__level);
+  getGeometricError(i) {
+    return this.rootTile.geometricError / Math.pow(2, i.implicitTilingData.level);
   }
   /**
    * Determine what child subtrees exist and return a list of information.
@@ -427,16 +443,16 @@ class A extends m {
    * @returns {[]} A list of identifiers for the child subtrees.
    * @private
    */
-  listChildSubtrees(e, i) {
-    const t = [], r = d(this.rootTile);
-    for (let s = 0; s < i.length; s++) {
-      const n = i[s];
-      if (n !== void 0)
-        for (let o = 0; o < r; o++) {
-          const l = s * r + o;
-          this.getBit(e._childSubtreeAvailability, l) && t.push({
-            tile: n,
-            childMortonIndex: l
+  listChildSubtrees(i, e) {
+    const t = [], r = m(this.rootTile);
+    for (let n = 0; n < e.length; n++) {
+      const s = e[n];
+      if (s !== void 0)
+        for (let l = 0; l < r; l++) {
+          const o = n * r + l;
+          this.getBit(i._childSubtreeAvailability, o) && t.push({
+            tile: s,
+            childMortonIndex: o
           });
         }
     }
@@ -455,8 +471,8 @@ class A extends m {
    * @param {string} uri - The URI template string with placeholders.
    * @returns {string} The URI with placeholders replaced by the tile's properties.
    */
-  parseImplicitURI(e, i) {
-    return i = i.replace("{level}", e.__level), i = i.replace("{x}", e.__x), i = i.replace("{y}", e.__y), i = i.replace("{z}", e.__z), i;
+  parseImplicitURI(i, e) {
+    return e = e.replace("{level}", i.implicitTilingData.level), e = e.replace("{x}", i.implicitTilingData.x), e = e.replace("{y}", i.implicitTilingData.y), e = e.replace("{z}", i.implicitTilingData.z), e;
   }
   /**
    * Generates the full external buffer URI for a tile by combining an implicit URI with a buffer URI.
@@ -471,67 +487,77 @@ class A extends m {
    * @param {string} bufUri - The buffer file name to append (e.g., "0_1.bin").
    * @returns {string} The full external buffer URI.
    */
-  parseImplicitURIBuffer(e, i, t) {
-    const r = this.parseImplicitURI(e, i), s = new URL(r, this.workingPath + "/");
-    return s.pathname = s.pathname.substring(0, s.pathname.lastIndexOf("/")), new URL(s.pathname + "/" + t, this.workingPath + "/").toString();
+  parseImplicitURIBuffer(i, e, t) {
+    const r = this.parseImplicitURI(i, e), n = new URL(r, this.workingPath + "/");
+    return n.pathname = n.pathname.substring(0, n.pathname.lastIndexOf("/")), new URL(n.pathname + "/" + t, this.workingPath + "/").toString();
+  }
+}
+class w {
+  constructor() {
+    this.name = "IMPLICIT_TILING_PLUGIN";
+  }
+  init(i) {
+    this.tiles = i;
+  }
+  preprocessNode(i, e, t) {
+    var r;
+    i.implicitTiling ? (i.internal.hasUnrenderableContent = !0, i.internal.hasRenderableContent = !1, i.implicitTilingData = {
+      // Keep this tile as an Implicit Root Tile
+      root: i,
+      // Idx of the tile in its subtree
+      subtreeIdx: 0,
+      // Coords of the tile
+      x: 0,
+      y: 0,
+      z: 0,
+      level: 0
+    }) : /.subtree$/i.test((r = i.content) == null ? void 0 : r.uri) && (i.internal.hasUnrenderableContent = !0, i.internal.hasRenderableContent = !1);
+  }
+  parseTile(i, e, t) {
+    if (/^subtree$/i.test(t)) {
+      const r = new A(e);
+      return r.workingPath = e.internal.basePath, r.fetchOptions = this.tiles.fetchOptions, r.parse(i);
+    }
+  }
+  preprocessURL(i, e) {
+    if (e && e.implicitTiling) {
+      const t = e.implicitTiling.subtrees.uri.replace("{level}", e.implicitTilingData.level).replace("{x}", e.implicitTilingData.x).replace("{y}", e.implicitTilingData.y).replace("{z}", e.implicitTilingData.z);
+      return new URL(t, e.internal.basePath + "/").toString();
+    }
+    return i;
+  }
+  disposeTile(i) {
+    var e;
+    /.subtree$/i.test((e = i.content) == null ? void 0 : e.uri) && (i.children.forEach((t) => {
+      this.tiles.processNodeQueue.remove(t);
+    }), i.children.length = 0);
   }
 }
 class x {
   constructor() {
-    this.name = "IMPLICIT_TILING_PLUGIN";
-  }
-  init(e) {
-    this.tiles = e;
-  }
-  preprocessNode(e, i, t) {
-    var r;
-    e.implicitTiling ? (e.__hasUnrenderableContent = !0, e.__hasRenderableContent = !1, e.__subtreeIdx = 0, e.__implicitRoot = e, e.__x = 0, e.__y = 0, e.__z = 0, e.__level = 0) : /.subtree$/i.test((r = e.content) == null ? void 0 : r.uri) && (e.__hasUnrenderableContent = !0, e.__hasRenderableContent = !1);
-  }
-  parseTile(e, i, t) {
-    if (/^subtree$/i.test(t)) {
-      const r = new A(i);
-      return r.workingPath = i.__basePath, r.fetchOptions = this.tiles.fetchOptions, r.parse(e);
-    }
-  }
-  preprocessURL(e, i) {
-    if (i && i.implicitTiling) {
-      const t = i.implicitTiling.subtrees.uri.replace("{level}", i.__level).replace("{x}", i.__x).replace("{y}", i.__y).replace("{z}", i.__z);
-      return new URL(t, i.__basePath + "/").toString();
-    }
-    return e;
-  }
-  disposeTile(e) {
-    var i;
-    /.subtree$/i.test((i = e.content) == null ? void 0 : i.uri) && (e.children.forEach((t) => {
-      this.tiles.processNodeQueue.remove(t);
-    }), e.children.length = 0, e.__childrenProcessed = 0);
-  }
-}
-class T {
-  constructor() {
     this.name = "ENFORCE_NONZERO_ERROR", this.priority = -1 / 0, this.originalError = /* @__PURE__ */ new Map();
   }
-  preprocessNode(e) {
-    if (e.geometricError === 0) {
-      let i = e.parent, t = 1;
-      for (; i !== null; ) {
-        if (i.geometricError !== 0) {
-          e.geometricError = i.geometricError * 2 ** -t;
+  preprocessNode(i) {
+    if (i.geometricError === 0) {
+      let e = i.parent, t = 1;
+      for (; e !== null; ) {
+        if (e.geometricError !== 0) {
+          i.geometricError = e.geometricError * 2 ** -t;
           break;
         }
-        i = i.parent, t++;
+        e = e.parent, t++;
       }
     }
   }
 }
 export {
-  E as CesiumIonAuth,
-  R as CesiumIonAuthPlugin,
-  T as EnforceNonZeroErrorPlugin,
-  N as GoogleCloudAuth,
-  U as GoogleCloudAuthPlugin,
-  x as ImplicitTilingPlugin,
-  S as QuantizedMeshLoaderBase,
-  M as zigZagDecode
+  I as CesiumIonAuth,
+  N as CesiumIonAuthPlugin,
+  x as EnforceNonZeroErrorPlugin,
+  U as GoogleCloudAuth,
+  S as GoogleCloudAuthPlugin,
+  w as ImplicitTilingPlugin,
+  R as QuantizedMeshLoaderBase,
+  V as zigZagDecode
 };
 //# sourceMappingURL=index.core-plugins.js.map

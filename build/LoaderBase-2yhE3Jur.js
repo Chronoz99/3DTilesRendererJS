@@ -16,7 +16,7 @@ function h(r, e = null, t = null) {
 function u(r, e = null) {
   let t = r;
   for (; t; ) {
-    const n = t.__depth, o = t.parent;
+    const n = t.internal.depth, o = t.parent;
     e && e(t, o, n), t = o;
   }
 }
@@ -74,10 +74,10 @@ export {
   y as L,
   g as T,
   w as a,
-  u as b,
-  f as c,
+  f as b,
+  u as c,
   c as g,
   d as r,
   h as t
 };
-//# sourceMappingURL=LoaderBase-CfTLVHyZ.js.map
+//# sourceMappingURL=LoaderBase-2yhE3Jur.js.map

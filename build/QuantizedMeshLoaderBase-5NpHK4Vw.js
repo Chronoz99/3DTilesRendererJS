@@ -1,4 +1,4 @@
-import { t as et, L as st } from "./LoaderBase-CfTLVHyZ.js";
+import { t as et, L as st } from "./LoaderBase-2yhE3Jur.js";
 class it {
   constructor(t = {}) {
     const { apiToken: s, autoRefreshToken: e = !1 } = t;
@@ -73,7 +73,7 @@ class rt {
     const { useRecommendedSettings: s, auth: e } = this;
     t.resetFailedTiles(), t.rootURL == null && (t.rootURL = nt), e.sessionOptions || (e.authURL = t.rootURL), s && !e.isMapTilesSession && (t.errorTarget = 20), this.tiles = t, this._visibilityChangeCallback = ({ tile: i, visible: n }) => {
       var l, a;
-      const r = ((a = (l = i.cached.metadata) == null ? void 0 : l.asset) == null ? void 0 : a.copyright) || "";
+      const r = ((a = (l = i.engineData.metadata) == null ? void 0 : l.asset) == null ? void 0 : a.copyright) || "";
       n ? this._attributionsManager.addAttributions(r) : this._attributionsManager.removeAttributions(r);
     }, t.addEventListener("tile-visibility-change", this._visibilityChangeCallback);
   }
@@ -285,13 +285,13 @@ class ct extends st {
     z.sort(E);
     const W = r(), F = a(W, R);
     F.sort(X);
-    const j = r(), G = a(j, R);
-    G.sort(Z);
+    const j = r(), D = a(j, R);
+    D.sort(Z);
     const tt = {
       westIndices: B,
       southIndices: z,
       eastIndices: F,
-      northIndices: G
+      northIndices: D
     }, b = {};
     for (; s < e.byteLength; ) {
       const o = l(), u = r();
@@ -301,8 +301,8 @@ class ct extends st {
           let k = f[2 * d + 0] / 255 * 2 - 1, T = f[2 * d + 1] / 255 * 2 - 1;
           const A = 1 - (Math.abs(k) + Math.abs(T));
           if (A < 0) {
-            const D = k;
-            k = (1 - Math.abs(T)) * H(D), T = (1 - Math.abs(D)) * H(T);
+            const G = k;
+            k = (1 - Math.abs(T)) * H(G), T = (1 - Math.abs(G)) * H(T);
           }
           const L = Math.sqrt(k * k + T * T + A * A);
           p[3 * d + 0] = k / L, p[3 * d + 1] = T / L, p[3 * d + 2] = A / L;
@@ -350,4 +350,4 @@ export {
   lt as b,
   v as z
 };
-//# sourceMappingURL=QuantizedMeshLoaderBase-DmrZgwB-.js.map
+//# sourceMappingURL=QuantizedMeshLoaderBase-5NpHK4Vw.js.map

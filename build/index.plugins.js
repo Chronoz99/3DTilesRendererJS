@@ -1,8 +1,8 @@
-import { C as u, a as g, G as r, Q as t, z as T } from "./QuantizedMeshLoaderBase-DmrZgwB-.js";
-import { EnforceNonZeroErrorPlugin as p, ImplicitTilingPlugin as d } from "./index.core-plugins.js";
-import { C as s } from "./WMSCapabilitiesLoader-D0he5Zmo.js";
-import { i as C, B as M, g as h, D as O, k as S, p as G, G as c, r as x, q as y, d as L, h as R, I as v, L as I, O as F, Q as W, j as f, R as B, S as E, f as A, m as Z, T as _, c as b, b as z, a as D, U as Q, t as U, W as X, o as N, s as Y, e as j, n as k, X as q, l as w } from "./WMSCapabilitiesLoader-D0he5Zmo.js";
-class l extends s {
+import { C as u, a as r, G as g, Q as t, z as T } from "./QuantizedMeshLoaderBase-5NpHK4Vw.js";
+import { EnforceNonZeroErrorPlugin as d, ImplicitTilingPlugin as p } from "./index.core-plugins.js";
+import { C as a } from "./WMSCapabilitiesLoader-fRYK0muT.js";
+import { i as M, B as C, g as h, D as S, k as O, p as c, G, r as x, q as y, d as L, h as R, I as v, L as F, M as I, O as W, Q as f, j as B, R as E, S as A, s as Z, f as _, m as b, T as z, c as D, b as Q, a as U, U as X, u as N, W as Y, o as j, t as k, e as q, n as w, X as J, l as $ } from "./WMSCapabilitiesLoader-fRYK0muT.js";
+class l extends a {
   constructor(e) {
     super({
       ...e,
@@ -11,46 +11,48 @@ class l extends s {
   }
 }
 export {
-  C as BaseRegion,
-  M as BatchedTilesPlugin,
+  M as BaseRegion,
+  C as BatchedTilesPlugin,
   u as CesiumIonAuth,
   l as CesiumIonAuthPlugin,
   h as CesiumIonOverlay,
-  O as DebugTilesPlugin,
-  S as DeepZoomImagePlugin,
-  p as EnforceNonZeroErrorPlugin,
-  G as GLTFCesiumRTCExtension,
-  c as GLTFExtensionsPlugin,
+  S as DebugTilesPlugin,
+  O as DeepZoomImagePlugin,
+  d as EnforceNonZeroErrorPlugin,
+  c as GLTFCesiumRTCExtension,
+  G as GLTFExtensionsPlugin,
   x as GLTFMeshFeaturesExtension,
   y as GLTFStructuralMetadataExtension,
   L as GeoJSONOverlay,
-  g as GoogleCloudAuth,
-  r as GoogleCloudAuthPlugin,
+  r as GoogleCloudAuth,
+  g as GoogleCloudAuthPlugin,
   R as GoogleMapsOverlay,
   v as ImageOverlayPlugin,
-  d as ImplicitTilingPlugin,
-  I as LoadRegionPlugin,
-  F as OBBRegion,
+  p as ImplicitTilingPlugin,
+  F as LoadRegionPlugin,
+  I as MeshFeatures,
+  W as OBBRegion,
   t as QuantizedMeshLoaderBase,
-  W as QuantizedMeshPlugin,
-  f as RayRegion,
-  B as ReorientationPlugin,
-  E as SphereRegion,
-  A as TMSTilesOverlay,
-  Z as TMSTilesPlugin,
-  _ as TileCompressionPlugin,
-  b as TileFlatteningPlugin,
-  z as TilesFadePlugin,
-  D as UnloadTilesPlugin,
-  Q as UpdateOnChangePlugin,
-  U as WMSCapabilitiesLoader,
-  X as WMSTilesOverlay,
-  N as WMSTilesPlugin,
-  Y as WMTSCapabilitiesLoader,
-  j as WMTSTilesOverlay,
-  k as WMTSTilesPlugin,
-  q as XYZTilesOverlay,
-  w as XYZTilesPlugin,
+  f as QuantizedMeshPlugin,
+  B as RayRegion,
+  E as ReorientationPlugin,
+  A as SphereRegion,
+  Z as StructuralMetadata,
+  _ as TMSTilesOverlay,
+  b as TMSTilesPlugin,
+  z as TileCompressionPlugin,
+  D as TileFlatteningPlugin,
+  Q as TilesFadePlugin,
+  U as UnloadTilesPlugin,
+  X as UpdateOnChangePlugin,
+  N as WMSCapabilitiesLoader,
+  Y as WMSTilesOverlay,
+  j as WMSTilesPlugin,
+  k as WMTSCapabilitiesLoader,
+  q as WMTSTilesOverlay,
+  w as WMTSTilesPlugin,
+  J as XYZTilesOverlay,
+  $ as XYZTilesPlugin,
   T as zigZagDecode
 };
 //# sourceMappingURL=index.plugins.js.map
