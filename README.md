@@ -59,9 +59,9 @@ _Personal [Google Tiles API Key](https://developers.google.com/maps/documentatio
 
 [GeoJSON Overlays](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/three/geojson.html)
 
-**React Three Fiber**
+**React Three Fiber & Babylonjs**
 
-See the [dedicated documentation](./src/r3f/README.md) for information on using the project with `@react-three/fiber`.
+See the dedicated documentation for information on using the project with [@react-three/fiber](./src/r3f/README.md) and [babylonjs](./src/babylonjs/renderer/README.md).
 
 # Use
 
@@ -393,6 +393,31 @@ displayActiveTiles = false : Boolean
 
 Active tiles not currently visible in a camera frustum are removed from the scene as an optimization. Setting `displayActiveTiles` to true will keep them in the scene to be rendered from an outside camera view not accounted for by the tiles renderer.
 
+### .optimizedLoadStrategy
+
+```js
+optimizedLoadStrategy = false : Boolean
+```
+
+Enables an **experimental** optimized tile loading strategy that loads only the tiles needed for the current view, reducing memory usage and improving initial load times. Tiles are loaded independently based on screen space error without requiring all parent tiles to load first. Prevents visual gaps and flashing during camera movement.
+
+Based in part on [Cesium Native tile selection](https://cesium.com/learn/cesium-native/ref-doc/selection-algorithm-details.html).
+
+Default is `false` which uses the previous approach of loading all parent and sibling tiles for guaranteed smooth transitions.
+
+> [!WARN]
+> Setting is currently incompatible with plugins that split tiles and on-the-fly generate and dispose of child tiles including the ImageOverlaysPlugin enableTileSplitting setting, QuantizedMeshPlugin, & ImageFormatPlugins (XYZ, TMS, etc). Any tile sets that share caches or queues must also use the same setting.
+
+### .loadSiblings
+
+```js
+loadSiblings = true : Boolean
+```
+
+**Experimental** setting that, when true, causes sibling tiles to together to prevent gaps during camera movement. When false, only visible tiles are loaded, minimizing memory but potentially causing brief gaps during rapid movement.
+
+Only applies when `optimizedLoadStrategy` is enabled.
+
 ### .autoDisableRendererCulling
 
 ```js
@@ -400,6 +425,14 @@ autoDisableRendererCulling = true : Boolean
 ```
 
 If true then all tile meshes automatically have their [frustumCulled](https://threejs.org/docs/index.html#api/en/core/Object3D.frustumCulled) field set to false. This is useful particularly when using one camera because the tiles renderer automatically performs it's own frustum culling on visible tiles. If [displayActiveTiles](#displayActiveTiles) is true or multiple cameras are being used then you may consider setting this to false.
+
+### .maxProcessedTiles
+
+```js
+maxProcessedTiles = 250 : Number
+```
+
+The number of tiles to process up to immediately when traversing the tile set to determine what to render. Lower numbers prevent frame hiccups caused by processing too many tiles at once when a new tile set is available while higher values will process tiles more tiles immediately allowing data to be downloaded and data to be displayed sooner.
 
 ### .lruCache
 
