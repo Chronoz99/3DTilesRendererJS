@@ -10,8 +10,8 @@ import {
 	DataTexture,
 	EquirectangularReflectionMapping
 } from 'three';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 let camera, controls, scene, renderer, tiles;
 
@@ -46,9 +46,7 @@ function setupTiles() {
 
 	tiles.fetchOptions.mode = 'cors';
 	tiles.registerPlugin( new GLTFExtensionsPlugin( {
-		// Note the DRACO compression files need to be supplied via an explicit source.
-		// We use unpkg here but in practice should be provided by the application.
-		dracoLoader: new DRACOLoader().setDecoderPath( 'https://unpkg.com/three@0.153.0/examples/jsm/libs/draco/gltf/' )
+		dracoLoader: new DRACOLoader(),
 	} ) );
 
 	scene.add( tiles.group );

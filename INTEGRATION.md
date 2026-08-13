@@ -163,7 +163,7 @@ export class TilesetCacheService {
 
     // Fetch from Google
     const url = `https://tile.googleapis.com/v1/3dtiles/root.json?key=${this.apiKey}`;
-    
+
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -177,7 +177,7 @@ export class TilesetCacheService {
         json,
         fetchedAt: Date.now(),
       };
-      
+
       await redis.setex(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(cacheData));
 
       return json;
@@ -205,7 +205,7 @@ export class TilesetCacheService {
       }
 
       const json = await response.json();
-      
+
       await redis.setex(cacheKey, CACHE_TTL_SECONDS, JSON.stringify({
         json,
         fetchedAt: Date.now(),
@@ -237,7 +237,7 @@ const cacheService = new TilesetCacheService();
 router.get('/google/root', async (req, res) => {
   try {
     const rootJson = await cacheService.getGoogleRootTileset();
-    
+
     if (!rootJson) {
       return res.status(503).json({ error: 'Unable to fetch tileset' });
     }
@@ -257,14 +257,14 @@ router.get('/google/root', async (req, res) => {
  */
 router.get('/custom/root', async (req, res) => {
   const { url } = req.query;
-  
+
   if (!url || typeof url !== 'string') {
     return res.status(400).json({ error: 'Missing url parameter' });
   }
 
   try {
     const rootJson = await cacheService.getCustomRootTileset(url);
-    
+
     if (!rootJson) {
       return res.status(503).json({ error: 'Unable to fetch tileset' });
     }
@@ -342,7 +342,7 @@ export function Maps3DViewer({ apiKey, center }: Maps3DViewerProps) {
       <ambientLight intensity={0.5} />
       <directionalLight position={[1000, 2000, 1000]} intensity={1.5} />
 
-      {/* 
+      {/*
         Pass cachedRootJson to skip the initial root.json fetch.
         If cachedRootJson is null, it will fetch normally.
       */}
@@ -389,7 +389,7 @@ async function initTilesRenderer(
 ) {
   // Fetch cached root JSON from your backend
   let cachedRootJson: object | null = null;
-  
+
   try {
     const response = await fetch('/api/tiles/google/root');
     if (response.ok) {

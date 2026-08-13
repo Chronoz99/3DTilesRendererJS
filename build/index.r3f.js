@@ -1,644 +1,693 @@
-import { jsx as g, jsxs as S, Fragment as H } from "react/jsx-runtime";
-import { useRef as T, useLayoutEffect as N, useEffect as y, createContext as G, forwardRef as _, useContext as q, useState as j, useCallback as K, useReducer as ye, useMemo as L, StrictMode as Ce, cloneElement as xe } from "react";
-import { useThree as M, useFrame as F, createPortal as Ee } from "@react-three/fiber";
-import { Object3D as be, Scene as Me, Vector3 as R, Matrix4 as A, Ray as ee, OrthographicCamera as Le, BackSide as qe, EventDispatcher as pe, Line3 as me, Vector2 as we, Raycaster as _e } from "three";
-import { T as Se, E as Re, G as Pe, a as Te } from "./CameraTransitionManager-DimD-zBE.js";
-import { W as Fe, a as We, O as he } from "./MemoryUtils-BEiOVCnL.js";
-import { createRoot as je } from "react-dom/client";
-function Oe(o, e) {
-  if (o === e)
-    return !0;
-  if (!o || !e)
-    return o === e;
-  for (const t in o)
-    if (o[t] !== e[t])
-      return !1;
-  for (const t in e)
-    if (o[t] !== e[t])
-      return !1;
-  return !0;
+import { N as e } from "./renderer-CASIahiy.js";
+import { d as t, i as n, m as r, n as i, r as a, t as o } from "./renderer-t4tMADa3.js";
+import { BackSide as s, EventDispatcher as c, Line3 as l, Matrix4 as u, Object3D as d, OrthographicCamera as f, Ray as p, Raycaster as m, Scene as h, Vector2 as g, Vector3 as _ } from "three";
+import { StrictMode as v, cloneElement as y, createContext as b, forwardRef as x, useCallback as S, useContext as C, useEffect as w, useLayoutEffect as T, useMemo as E, useReducer as ee, useRef as D, useState as O } from "react";
+import { createPortal as te, useFrame as k, useThree as A } from "@react-three/fiber";
+import { Fragment as j, jsx as M, jsxs as N } from "react/jsx-runtime";
+import { createRoot as ne } from "react-dom/client";
+//#region src/r3f/utilities/useObjectDep.js
+function re(e, t) {
+	if (e === t) return !0;
+	if (!e || !t) return e === t;
+	for (let n in e) if (e[n] !== t[n]) return !1;
+	for (let n in t) if (e[n] !== t[n]) return !1;
+	return !0;
 }
-function te(o) {
-  const e = T();
-  return Oe(e.current, o) || (e.current = o), e.current;
+function P(e) {
+	let t = D();
+	return re(t.current, e) || (t.current = e), t.current;
 }
-function ke(o) {
-  return /^on/g.test(o);
+//#endregion
+//#region src/r3f/utilities/useOptions.js
+function ie(e) {
+	return /^on/g.test(e);
 }
-function Ae(o) {
-  return o.replace(/^on/, "").replace(/[a-z][A-Z]/g, (e) => `${e[0]}-${e[1]}`).toLowerCase();
+function ae(e) {
+	return e.replace(/^on/, "").replace(/[a-z][A-Z]/g, (e) => `${e[0]}-${e[1]}`).toLowerCase();
 }
-function ae(o) {
-  return o.split("-");
+function oe(e) {
+	return e.split("-");
 }
-function fe(o, e) {
-  let t = o;
-  const i = [...e];
-  for (; i.length !== 0; ) {
-    const n = i.shift();
-    t = t[n];
-  }
-  return t;
+function se(e, t) {
+	let n = e, r = [...t];
+	for (; r.length !== 0;) {
+		let e = r.shift();
+		n = n[e];
+	}
+	return n;
 }
-function le(o, e, t) {
-  const i = [...e], n = i.pop();
-  fe(o, i)[n] = t;
+function ce(e, t, n) {
+	let r = [...t], i = r.pop();
+	se(e, r)[i] = n;
 }
-function z(o, e, t = !1) {
-  N(() => {
-    if (o === null)
-      return;
-    const i = {}, n = {};
-    for (const r in e)
-      if (ke(r) && o.addEventListener && !(r in o)) {
-        const h = Ae(r);
-        n[h] = e[r], o.addEventListener(h, e[r]);
-      } else {
-        const h = t ? [r] : ae(r);
-        i[r] = fe(o, h), le(o, h, e[r]);
-      }
-    return () => {
-      for (const r in n)
-        o.removeEventListener(r, n[r]);
-      for (const r in i) {
-        const h = t ? [r] : ae(r);
-        le(o, h, i[r]);
-      }
-    };
-  }, [o, te(e)]);
+function F(e, t, n = !1) {
+	T(() => {
+		if (e === null) return;
+		let r = {}, i = {};
+		for (let a in t) if (ie(a) && e.addEventListener && !(a in e)) {
+			let n = ae(a);
+			i[n] = t[a], e.addEventListener(n, t[a]);
+		} else {
+			let i = n ? [a] : oe(a);
+			r[a] = se(e, i), ce(e, i, t[a]);
+		}
+		return () => {
+			for (let t in i) e.removeEventListener(t, i[t]);
+			for (let t in r) ce(e, n ? [t] : oe(t), r[t]);
+		};
+	}, [e, P(t)]);
 }
-function ze(o, e) {
-  z(o, e, !0);
+function le(e, t) {
+	F(e, t, !0);
 }
-function D(o, ...e) {
-  y(() => {
-    e.forEach((t) => {
-      t && (t instanceof Function ? t(o) : t.current = o);
-    });
-  }, [o, ...e]);
+//#endregion
+//#region src/r3f/utilities/useApplyRefs.js
+function I(e, ...t) {
+	w(() => {
+		t.forEach((t) => {
+			t && (t instanceof Function ? t(e) : t.current = e);
+		});
+	}, [e, ...t]);
 }
-const P = G(null), De = G(null), ne = G(null);
-function Qe({ children: o }) {
-  const e = q(P), t = T();
-  return y(() => {
-    e && (t.current.matrixWorld = e.group.matrixWorld);
-  }, [e]), /* @__PURE__ */ g("group", { ref: t, matrixWorldAutoUpdate: !1, matrixAutoUpdate: !1, children: o });
+//#endregion
+//#region src/r3f/components/TilesRenderer.jsx
+var L = b(null), ue = b(null), R = b(null);
+function de({ children: e }) {
+	let t = C(L), n = D();
+	return w(() => {
+		t && (n.current.matrixWorld = t.group.matrixWorld);
+	}, [t]), /* @__PURE__ */ M("group", {
+		ref: n,
+		matrixWorldAutoUpdate: !1,
+		matrixAutoUpdate: !1,
+		children: e
+	});
 }
-function rt(o) {
-  const {
-    lat: e = 0,
-    lon: t = 0,
-    height: i = 0,
-    az: n = 0,
-    el: r = 0,
-    roll: h = 0,
-    ellipsoid: c = Fe.clone(),
-    children: l
-  } = o, u = q(P), m = M((s) => s.invalidate), [d, p] = j(null), v = K(() => {
-    if (d === null)
-      return;
-    const s = u && u.ellipsoid || c || null;
-    d.matrix.identity(), d.visible = !!(u && u.root || c), s !== null && (s.getOrientedEastNorthUpFrame(e, t, i, n, r, h, d.matrix), d.matrix.decompose(d.position, d.quaternion, d.scale), d.updateMatrixWorld(), m());
-  }, [m, u, e, t, i, n, r, h, c, d, te(c.radius)]);
-  return y(() => {
-    if (u !== null && d !== null)
-      return d.updateMatrixWorld = function(s) {
-        this.matrixAutoUpdate && this.updateMatrix(), (this.matrixWorldNeedsUpdate || s) && (this.matrixWorld.multiplyMatrices(u.group.matrixWorld, this.matrix), s = !0);
-        const a = this.children;
-        for (let f = 0, C = a.length; f < C; f++)
-          a[f].updateMatrixWorld(s);
-      }, () => {
-        d.updateMatrixWorld = be.prototype.updateMatrixWorld;
-      };
-  }, [u, d]), y(() => {
-    v();
-  }, [v]), y(() => {
-    if (u !== null)
-      return u.addEventListener("load-tileset", v), () => {
-        u.removeEventListener("load-tileset", v);
-      };
-  }, [u, v]), /* @__PURE__ */ g("group", { ref: p, children: l });
+function fe(e) {
+	let { lat: n = 0, lon: r = 0, height: i = 0, az: a = 0, el: o = 0, roll: s = 0, ellipsoid: c = t.clone(), children: l } = e, u = C(L), f = A((e) => e.invalidate), [p, m] = O(null), h = S(() => {
+		if (p === null) return;
+		let e = u && u.ellipsoid || c || null;
+		p.matrix.identity(), p.visible = !!(u && u.root || c), e !== null && (e.getOrientedEastNorthUpFrame(n, r, i, a, o, s, p.matrix), p.matrix.decompose(p.position, p.quaternion, p.scale), p.updateMatrixWorld(), f());
+	}, [
+		f,
+		u,
+		n,
+		r,
+		i,
+		a,
+		o,
+		s,
+		c,
+		p,
+		P(c.radius)
+	]);
+	return w(() => {
+		if (u !== null && p !== null) return p.updateMatrixWorld = function(e) {
+			this.matrixAutoUpdate && this.updateMatrix(), (this.matrixWorldNeedsUpdate || e) && (this.matrixWorld.multiplyMatrices(u.group.matrixWorld, this.matrix), e = !0);
+			let t = this.children;
+			for (let n = 0, r = t.length; n < r; n++) t[n].updateMatrixWorld(e);
+		}, () => {
+			p.updateMatrixWorld = d.prototype.updateMatrixWorld;
+		};
+	}, [u, p]), w(() => {
+		h();
+	}, [h]), w(() => {
+		if (u !== null) return u.addEventListener("load-tileset", h), () => {
+			u.removeEventListener("load-tileset", h);
+		};
+	}, [u, h]), /* @__PURE__ */ M("group", {
+		ref: m,
+		children: l
+	});
 }
-const it = _(function(e, t) {
-  const { plugin: i, args: n, children: r, ...h } = e, c = q(P), [l, u] = j(null), [, m] = ye((d) => d + 1, 0);
-  if (N(() => {
-    if (c === null)
-      return;
-    let d;
-    return Array.isArray(n) ? d = new i(...n) : d = new i(n), u(d), () => {
-      u(null);
-    };
-  }, [i, c, te(n)]), z(l, h), N(() => {
-    if (l !== null)
-      return c.registerPlugin(l), m(), () => {
-        c.unregisterPlugin(l);
-      };
-  }, [l]), D(l, t), !(!l || !c.plugins.includes(l)))
-    return /* @__PURE__ */ g(De.Provider, { value: l, children: r });
-}), ot = _(function(e, t) {
-  const { url: i, cachedRootJson: n = null, group: r = {}, enabled: h = !0, children: c, ...l } = e, [u, m, d] = M((a) => [a.camera, a.gl, a.invalidate]), [p, v] = j(null);
-  y(() => {
-    const a = () => d(), f = new Se(i, n);
-    return f.addEventListener("needs-render", a), f.addEventListener("needs-update", a), v(f), () => {
-      f.removeEventListener("needs-render", a), f.removeEventListener("needs-update", a), f.dispose(), v(null);
-    };
-  }, [i, n, d]), F(() => {
-    p === null || !h || (u.updateMatrixWorld(), p.setResolutionFromRenderer(u, m), p.update());
-  }), N(() => {
-    if (p !== null)
-      return p.setCamera(u), () => {
-        p.deleteCamera(u);
-      };
-  }, [p, u]), D(p, t), z(p, l);
-  const s = L(() => p ? {
-    ellipsoid: p.ellipsoid,
-    frame: p.group
-  } : null, [p == null ? void 0 : p.ellipsoid, p == null ? void 0 : p.group]);
-  return p ? /* @__PURE__ */ S(H, { children: [
-    /* @__PURE__ */ g("primitive", { object: p.group, ...r }),
-    /* @__PURE__ */ g(P.Provider, { value: p, children: /* @__PURE__ */ g(ne.Provider, { value: s, children: /* @__PURE__ */ g(Qe, { children: c }) }) })
-  ] }) : null;
-}), Ue = _(function({ children: e, ...t }, i) {
-  const [n] = M((l) => [l.gl]), [r, h] = j(null), c = L(() => document.createElement("div"), []);
-  y(() => (c.style.pointerEvents = "none", c.style.position = "absolute", c.style.width = "100%", c.style.height = "100%", c.style.left = 0, c.style.top = 0, n.domElement.parentNode.appendChild(c), () => {
-    c.remove();
-  }), [c, n.domElement.parentNode]), y(() => {
-    const l = je(c);
-    return h(l), () => {
-      l.unmount();
-    };
-  }, [c]), r !== null && r.render(
-    /* @__PURE__ */ g(Ce, { children: /* @__PURE__ */ g("div", { ...t, ref: i, children: e }) })
-  );
+var pe = x(function(e, t) {
+	let { plugin: n, args: r, children: i, ...a } = e, o = C(L), [s, c] = O(null), [, l] = ee((e) => e + 1, 0);
+	if (T(() => {
+		if (o === null) return;
+		let e;
+		return e = Array.isArray(r) ? new n(...r) : new n(r), c(e), () => {
+			c(null);
+		};
+	}, [
+		n,
+		o,
+		P(r)
+	]), F(s, a), T(() => {
+		if (s !== null) return o.registerPlugin(s), l(), () => {
+			o.unregisterPlugin(s);
+		};
+	}, [s]), I(s, t), !(!s || !o.plugins.includes(s))) return /* @__PURE__ */ M(ue.Provider, {
+		value: s,
+		children: i
+	});
+}), me = x(function(e, t) {
+	let { url: r, cachedRootJson: i = null, group: a = {}, enabled: o = !0, children: s, ...c } = e, [l, u, d] = A((e) => [
+		e.camera,
+		e.gl,
+		e.invalidate
+	]), [f, p] = O(null);
+	w(() => {
+		let e = () => d(), t = new n(r, i);
+		return t.addEventListener("needs-render", e), t.addEventListener("needs-update", e), p(t), () => {
+			t.removeEventListener("needs-render", e), t.removeEventListener("needs-update", e), t.dispose(), p(null);
+		};
+	}, [
+		r,
+		i,
+		d
+	]), k(() => {
+		f === null || !o || (l.updateMatrixWorld(), f.setResolutionFromRenderer(l, u), f.update());
+	}), T(() => {
+		if (f !== null) return f.setCamera(l), () => {
+			f.deleteCamera(l);
+		};
+	}, [f, l]), I(f, t), F(f, c);
+	let m = E(() => f ? {
+		ellipsoid: f.ellipsoid,
+		frame: f.group
+	} : null, [f?.ellipsoid, f?.group]);
+	return f ? /* @__PURE__ */ N(j, { children: [/* @__PURE__ */ M("primitive", {
+		object: f.group,
+		...a
+	}), /* @__PURE__ */ M(L.Provider, {
+		value: f,
+		children: /* @__PURE__ */ M(R.Provider, {
+			value: m,
+			children: /* @__PURE__ */ M(de, { children: s })
+		})
+	})] }) : null;
+}), he = x(function({ children: e, ...t }, n) {
+	let [r] = A((e) => [e.gl]), [i, a] = O(null), o = E(() => document.createElement("div"), []);
+	w(() => (o.style.pointerEvents = "none", o.style.position = "absolute", o.style.width = "100%", o.style.height = "100%", o.style.left = 0, o.style.top = 0, r.domElement.parentNode.appendChild(o), () => {
+		o.remove();
+	}), [o, r.domElement.parentNode]), w(() => {
+		let e = ne(o);
+		return a(e), () => {
+			e.unmount();
+		};
+	}, [o]), i !== null && i.render(/* @__PURE__ */ M(v, { children: /* @__PURE__ */ M("div", {
+		...t,
+		ref: n,
+		children: e
+	}) }));
 });
-function Ie() {
-  return crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
+//#endregion
+//#region src/r3f/components/TilesAttributionOverlay.jsx
+function ge() {
+	return crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
 }
-function st({ children: o, style: e, generateAttributions: t, ...i }) {
-  const n = q(P), [r, h] = j([]);
-  y(() => {
-    if (!n)
-      return;
-    let m = !1;
-    const d = () => {
-      m || (m = !0, queueMicrotask(() => {
-        h(n.getAttributions()), m = !1;
-      }));
-    };
-    return n.addEventListener("tile-visibility-change", d), n.addEventListener("load-tileset", d), () => {
-      n.removeEventListener("tile-visibility-change", d), n.removeEventListener("load-tileset", d);
-    };
-  }, [n]);
-  const c = L(() => "class_" + Ie(), []), l = L(() => `
-		#${c} a {
+function _e({ children: e, style: t, generateAttributions: n, ...r }) {
+	let i = C(L), [a, o] = O([]);
+	w(() => {
+		if (!i) return;
+		let e = !1, t = () => {
+			e || (e = !0, queueMicrotask(() => {
+				o(i.getAttributions()), e = !1;
+			}));
+		};
+		return i.addEventListener("tile-visibility-change", t), i.addEventListener("load-tileset", t), () => {
+			i.removeEventListener("tile-visibility-change", t), i.removeEventListener("load-tileset", t);
+		};
+	}, [i]);
+	let s = E(() => "class_" + ge(), []), c = E(() => `
+		#${s} a {
 			color: white;
 		}
 
-		#${c} img {
+		#${s} img {
 			max-width: 125px;
 			display: block;
 			margin: 5px 0;
 		}
-	`, [c]);
-  let u;
-  if (t)
-    u = t(r, c);
-  else {
-    const m = [];
-    r.forEach((d, p) => {
-      let v = null;
-      d.type === "string" ? v = /* @__PURE__ */ g("div", { children: d.value }, p) : d.type === "html" ? v = /* @__PURE__ */ g("div", { dangerouslySetInnerHTML: { __html: d.value }, style: { pointerEvents: "all" } }, p) : d.type === "image" && (v = /* @__PURE__ */ g("div", { children: /* @__PURE__ */ g("img", { src: d.value }) }, p)), v && m.push(v);
-    }), u = /* @__PURE__ */ S(H, { children: [
-      /* @__PURE__ */ g("style", { children: l }),
-      m
-    ] });
-  }
-  return /* @__PURE__ */ S(
-    Ue,
-    {
-      id: c,
-      style: {
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        padding: "10px",
-        color: "rgba( 255, 255, 255, 0.75 )",
-        fontSize: "10px",
-        ...e
-      },
-      ...i,
-      children: [
-        o,
-        u
-      ]
-    }
-  );
+	`, [s]), l;
+	if (n) l = n(a, s);
+	else {
+		let e = [];
+		a.forEach((t, n) => {
+			let r = null;
+			t.type === "string" ? r = /* @__PURE__ */ M("div", { children: t.value }, n) : t.type === "html" ? r = /* @__PURE__ */ M("div", {
+				dangerouslySetInnerHTML: { __html: t.value },
+				style: { pointerEvents: "all" }
+			}, n) : t.type === "image" && (r = /* @__PURE__ */ M("div", { children: /* @__PURE__ */ M("img", { src: t.value }) }, n)), r && e.push(r);
+		}), l = /* @__PURE__ */ N(j, { children: [/* @__PURE__ */ M("style", { children: c }), e] });
+	}
+	return /* @__PURE__ */ N(he, {
+		id: s,
+		style: {
+			position: "absolute",
+			bottom: 0,
+			left: 0,
+			padding: "10px",
+			color: "rgba( 255, 255, 255, 0.75 )",
+			fontSize: "10px",
+			...t
+		},
+		...r,
+		children: [e, l]
+	});
 }
-const ve = _(function(e, t) {
-  const { controlsConstructor: i, domElement: n, scene: r, camera: h, ellipsoid: c, ellipsoidFrame: l, ...u } = e, [m] = M((E) => [E.camera]), [d] = M((E) => [E.gl]), [p] = M((E) => [E.scene]), [v] = M((E) => [E.invalidate]), [s] = M((E) => [E.get]), [a] = M((E) => [E.set]), f = q(ne), C = h || m || null, b = r || p || null, ie = n || d.domElement || null, oe = c || (f == null ? void 0 : f.ellipsoid) || null, se = l || (f == null ? void 0 : f.frame) || null, x = L(() => new i(), [i]);
-  D(x, t), y(() => {
-    const E = () => v();
-    return x.addEventListener("change", E), x.addEventListener("start", E), x.addEventListener("end", E), () => {
-      x.removeEventListener("change", E), x.removeEventListener("start", E), x.removeEventListener("end", E);
-    };
-  }, [x, v]), y(() => {
-    x.setCamera(C);
-  }, [x, C]), y(() => {
-    x.setScene(b);
-  }, [x, b]), y(() => {
-    x.isGlobeControls && x.setEllipsoid(oe, se);
-  }, [x, oe, se]), y(() => (x.attach(ie), () => {
-    x.detach();
-  }), [x, ie]), y(() => {
-    const E = s().controls;
-    return a({ controls: x }), () => a({ controls: E });
-  }, [x, s, a]), F(() => {
-    x.update();
-  }, -1), ze(x, u);
-}), at = _(function(e, t) {
-  return /* @__PURE__ */ g(ve, { ...e, ref: t, controlsConstructor: Re });
-}), lt = _(function(e, t) {
-  return /* @__PURE__ */ g(ve, { ...e, ref: t, controlsConstructor: Pe });
-}), w = /* @__PURE__ */ new R(), W = /* @__PURE__ */ new R(), k = /* @__PURE__ */ new R(), $ = /* @__PURE__ */ new A(), B = /* @__PURE__ */ new A(), Q = /* @__PURE__ */ new ee(), J = {};
-function Ne(o, e, t, i) {
-  Q.origin.copy(o.position), Q.direction.set(0, 0, -1).transformDirection(o.matrixWorld), Q.applyMatrix4(t.matrixWorldInverse), e.closestPointToRayEstimate(Q, k), k.applyMatrix4(t.matrixWorld), W.set(0, 0, -1).transformDirection(o.matrixWorld);
-  const n = k.sub(o.position).dot(W);
-  return i.copy(o.position).addScaledVector(W, n), i;
+//#endregion
+//#region src/r3f/components/CameraControls.jsx
+var ve = x(function(e, t) {
+	let { controlsConstructor: n, domElement: r, scene: i, camera: a, ellipsoid: o, ellipsoidFrame: s, ...c } = e, [l] = A((e) => [e.camera]), [u] = A((e) => [e.gl]), [d] = A((e) => [e.scene]), [f] = A((e) => [e.invalidate]), [p] = A((e) => [e.get]), [m] = A((e) => [e.set]), h = C(R), g = a || l || null, _ = i || d || null, v = r || u.domElement || null, y = o || h?.ellipsoid || null, b = s || h?.frame || null, x = E(() => new n(), [n]);
+	I(x, t), w(() => {
+		let e = () => f();
+		return x.addEventListener("change", e), x.addEventListener("start", e), x.addEventListener("end", e), () => {
+			x.removeEventListener("change", e), x.removeEventListener("start", e), x.removeEventListener("end", e);
+		};
+	}, [x, f]), w(() => {
+		x.setCamera(g);
+	}, [x, g]), w(() => {
+		x.setScene(_);
+	}, [x, _]), w(() => {
+		x.isGlobeControls && x.setEllipsoid(y, b);
+	}, [
+		x,
+		y,
+		b
+	]), w(() => (x.attach(v), () => {
+		x.detach();
+	}), [x, v]), w(() => {
+		let e = p().controls;
+		return m({ controls: x }), () => m({ controls: e });
+	}, [
+		x,
+		p,
+		m
+	]), k(() => {
+		x.update();
+	}, -1), le(x, c);
+}), ye = x(function(e, t) {
+	return /* @__PURE__ */ M(ve, {
+		...e,
+		ref: t,
+		controlsConstructor: a
+	});
+}), be = x(function(e, t) {
+	return /* @__PURE__ */ M(ve, {
+		...e,
+		ref: t,
+		controlsConstructor: i
+	});
+}), z = /*@__PURE__*/ new _(), B = /*@__PURE__*/ new _(), V = /*@__PURE__*/ new _(), H = /*@__PURE__*/ new u(), U = /*@__PURE__*/ new u(), W = /*@__PURE__*/ new p(), G = {};
+function xe(e, t, n, r) {
+	W.origin.copy(e.position), W.direction.set(0, 0, -1).transformDirection(e.matrixWorld), W.applyMatrix4(n.matrixWorldInverse), t.closestPointToRayEstimate(W, V), V.applyMatrix4(n.matrixWorld), B.set(0, 0, -1).transformDirection(e.matrixWorld);
+	let i = V.sub(e.position).dot(B);
+	return r.copy(e.position).addScaledVector(B, i), r;
 }
-function Ve(o) {
-  const { defaultScene: e, defaultCamera: t, overrideRenderLoop: i = !0, renderPriority: n = 1 } = o, r = L(() => new Le(), []), [h, c, l, u] = M((m) => [m.set, m.size, m.gl, m.scene]);
-  y(() => {
-    h({ camera: r });
-  }, [h, r]), y(() => {
-    r.left = -c.width / 2, r.right = c.width / 2, r.top = c.height / 2, r.bottom = -c.height / 2, r.near = 0, r.far = 2e3, r.position.z = r.far / 2, r.updateProjectionMatrix();
-  }, [r, c]), F(() => {
-    i && l.render(e, t);
-    const m = l.autoClear;
-    l.autoClear = !1, l.clearDepth(), l.render(u, r), l.autoClear = m;
-  }, n);
+function Se(e) {
+	let { defaultScene: t, defaultCamera: n, overrideRenderLoop: r = !0, renderPriority: i = 1 } = e, a = E(() => new f(), []), [o, s, c, l] = A((e) => [
+		e.set,
+		e.size,
+		e.gl,
+		e.scene
+	]);
+	w(() => {
+		o({ camera: a });
+	}, [o, a]), w(() => {
+		a.left = -s.width / 2, a.right = s.width / 2, a.top = s.height / 2, a.bottom = -s.height / 2, a.near = 0, a.far = 2e3, a.position.z = a.far / 2, a.updateProjectionMatrix();
+	}, [a, s]), k(() => {
+		r && c.render(t, n);
+		let e = c.autoClear;
+		c.autoClear = !1, c.clearDepth(), c.render(l, a), c.autoClear = e;
+	}, i);
 }
-function ce() {
-  const o = T();
-  return y(() => {
-    const t = o.current.attributes.position;
-    for (let i = 0, n = t.count; i < n; i++)
-      w.fromBufferAttribute(t, i), w.y > 0 && (w.x = 0, t.setXYZ(i, ...w));
-  }), /* @__PURE__ */ g("boxGeometry", { ref: o });
+function Ce() {
+	let e = D();
+	return w(() => {
+		let t = e.current.attributes.position;
+		for (let e = 0, n = t.count; e < n; e++) z.fromBufferAttribute(t, e), z.y > 0 && (z.x = 0, t.setXYZ(e, ...z));
+	}), /* @__PURE__ */ M("boxGeometry", { ref: e });
 }
-function Ge({ northColor: o = 15684432, southColor: e = 16777215 }) {
-  const [t, i] = j(), n = T();
-  return y(() => {
-    i(n.current);
-  }, []), /* @__PURE__ */ S("group", { scale: 0.5, ref: n, children: [
-    /* @__PURE__ */ g("ambientLight", { intensity: 1 }),
-    /* @__PURE__ */ g("directionalLight", { position: [0, 2, 3], intensity: 3, target: t }),
-    /* @__PURE__ */ g("directionalLight", { position: [0, -2, -3], intensity: 3, target: t }),
-    /* @__PURE__ */ S("mesh", { children: [
-      /* @__PURE__ */ g("sphereGeometry", {}),
-      /* @__PURE__ */ g("meshBasicMaterial", { color: 0, opacity: 0.3, transparent: !0, side: qe })
-    ] }),
-    /* @__PURE__ */ S("group", { scale: [0.5, 1, 0.15], children: [
-      /* @__PURE__ */ S("mesh", { "position-y": 0.5, children: [
-        /* @__PURE__ */ g(ce, {}),
-        /* @__PURE__ */ g("meshStandardMaterial", { color: o })
-      ] }),
-      /* @__PURE__ */ S("mesh", { "position-y": -0.5, "rotation-x": Math.PI, children: [
-        /* @__PURE__ */ g(ce, {}),
-        /* @__PURE__ */ g("meshStandardMaterial", { color: e })
-      ] })
-    ] })
-  ] });
+function we({ northColor: e = 15684432, southColor: t = 16777215 }) {
+	let [n, r] = O(), i = D();
+	return w(() => {
+		r(i.current);
+	}, []), /* @__PURE__ */ N("group", {
+		scale: .5,
+		ref: i,
+		children: [
+			/* @__PURE__ */ M("ambientLight", { intensity: 1 }),
+			/* @__PURE__ */ M("directionalLight", {
+				position: [
+					0,
+					2,
+					3
+				],
+				intensity: 3,
+				target: n
+			}),
+			/* @__PURE__ */ M("directionalLight", {
+				position: [
+					0,
+					-2,
+					-3
+				],
+				intensity: 3,
+				target: n
+			}),
+			/* @__PURE__ */ N("mesh", { children: [/* @__PURE__ */ M("sphereGeometry", {}), /* @__PURE__ */ M("meshBasicMaterial", {
+				color: 0,
+				opacity: .3,
+				transparent: !0,
+				side: s
+			})] }),
+			/* @__PURE__ */ N("group", {
+				scale: [
+					.5,
+					1,
+					.15
+				],
+				children: [/* @__PURE__ */ N("mesh", {
+					"position-y": .5,
+					children: [/* @__PURE__ */ M(Ce, {}), /* @__PURE__ */ M("meshStandardMaterial", { color: e })]
+				}), /* @__PURE__ */ N("mesh", {
+					"position-y": -.5,
+					"rotation-x": Math.PI,
+					children: [/* @__PURE__ */ M(Ce, {}), /* @__PURE__ */ M("meshStandardMaterial", { color: t })]
+				})]
+			})
+		]
+	});
 }
-function ct({ children: o, overrideRenderLoop: e, mode: t = "3d", margin: i = 10, scale: n = 35, visible: r = !0, ...h }) {
-  const [c, l, u] = M((a) => [a.camera, a.scene, a.size]), m = q(ne), d = T(null), p = L(() => new Me(), []);
-  let v, s;
-  return Array.isArray(i) ? (v = i[0], s = i[1]) : (v = i, s = i), F(() => {
-    const a = m == null ? void 0 : m.ellipsoid, f = m == null ? void 0 : m.frame;
-    if (!a || !f || d.current === null)
-      return null;
-    const C = d.current;
-    if (Ne(c, a, f, k).applyMatrix4(f.matrixWorldInverse), a.getPositionToCartographic(k, J), a.getEastNorthUpFrame(J.lat, J.lon, 0, B).premultiply(f.matrixWorld), B.invert(), $.copy(c.matrixWorld).premultiply(B), t.toLowerCase() === "3d")
-      C.quaternion.setFromRotationMatrix($).invert();
-    else if (w.set(0, 1, 0).transformDirection($).normalize(), w.z = 0, w.normalize(), w.length() === 0)
-      C.quaternion.identity();
-    else {
-      const b = W.set(0, 1, 0).angleTo(w);
-      W.cross(w).normalize(), C.quaternion.setFromAxisAngle(W, -b);
-    }
-  }), o || (o = /* @__PURE__ */ g(Ge, {})), r ? Ee(
-    /* @__PURE__ */ S(H, { children: [
-      /* @__PURE__ */ g(
-        "group",
-        {
-          ref: d,
-          scale: n,
-          position: [
-            u.width / 2 - v - n / 2,
-            -u.height / 2 + s + n / 2,
-            0
-          ],
-          ...h,
-          children: o
-        }
-      ),
-      /* @__PURE__ */ g(
-        Ve,
-        {
-          defaultCamera: c,
-          defaultScene: l,
-          overrideRenderLoop: e,
-          renderPriority: 10
-        }
-      )
-    ] }),
-    p,
-    { events: { priority: 10 } }
-  ) : null;
+function Te({ children: e, overrideRenderLoop: t, mode: n = "3d", margin: r = 10, scale: i = 35, visible: a = !0, ...o }) {
+	let [s, c, l] = A((e) => [
+		e.camera,
+		e.scene,
+		e.size
+	]), u = C(R), d = D(null), f = E(() => new h(), []), p, m;
+	return Array.isArray(r) ? (p = r[0], m = r[1]) : (p = r, m = r), k(() => {
+		let e = u?.ellipsoid, t = u?.frame;
+		if (!e || !t || d.current === null) return null;
+		let r = d.current;
+		if (xe(s, e, t, V).applyMatrix4(t.matrixWorldInverse), e.getPositionToCartographic(V, G), e.getEastNorthUpFrame(G.lat, G.lon, 0, U).premultiply(t.matrixWorld), U.invert(), H.copy(s.matrixWorld).premultiply(U), n.toLowerCase() === "3d") r.quaternion.setFromRotationMatrix(H).invert();
+		else if (z.set(0, 1, 0).transformDirection(H).normalize(), z.z = 0, z.normalize(), z.length() === 0) r.quaternion.identity();
+		else {
+			let e = B.set(0, 1, 0).angleTo(z);
+			B.cross(z).normalize(), r.quaternion.setFromAxisAngle(B, -e);
+		}
+	}), e ||= /* @__PURE__ */ M(we, {}), a ? te(/* @__PURE__ */ N(j, { children: [/* @__PURE__ */ M("group", {
+		ref: d,
+		scale: i,
+		position: [
+			l.width / 2 - p - i / 2,
+			-l.height / 2 + m + i / 2,
+			0
+		],
+		...o,
+		children: e
+	}), /* @__PURE__ */ M(Se, {
+		defaultCamera: s,
+		defaultScene: c,
+		overrideRenderLoop: t,
+		renderPriority: 10
+	})] }), f, { events: { priority: 10 } }) : null;
 }
-const ut = _(function(e, t) {
-  const {
-    mode: i = "perspective",
-    onBeforeToggle: n,
-    perspectiveCamera: r,
-    orthographicCamera: h,
-    ...c
-  } = e, [l, u, m, d, p, v] = M((a) => [a.set, a.get, a.invalidate, a.controls, a.camera, a.size]), s = L(() => {
-    const a = new Te();
-    return a.autoSync = !1, p.isOrthographicCamera ? (a.orthographicCamera.copy(p), a.mode = "orthographic") : a.perspectiveCamera.copy(p), a.syncCameras(), a.mode = i, a;
-  }, []);
-  y(() => {
-    const { perspectiveCamera: a, orthographicCamera: f } = s, C = v.width / v.height;
-    a.aspect = C, a.updateProjectionMatrix(), f.left = -f.top * C, f.right = -f.left, a.updateProjectionMatrix();
-  }, [s, v]), D(s, t), y(() => {
-    const a = ({ camera: f }) => {
-      l(() => ({ camera: f }));
-    };
-    return l(() => ({ camera: s.camera })), s.addEventListener("camera-change", a), () => {
-      s.removeEventListener("camera-change", a);
-    };
-  }, [s, l]), y(() => {
-    const a = s.perspectiveCamera, f = s.orthographicCamera;
-    return s.perspectiveCamera = r || a, s.orthographicCamera = h || f, l(() => ({ camera: s.camera })), () => {
-      s.perspectiveCamera = a, s.orthographicCamera = f;
-    };
-  }, [r, h, s, l]), y(() => {
-    if (i !== s.mode) {
-      const a = i === "orthographic" ? s.orthographicCamera : s.perspectiveCamera;
-      n ? n(s, a) : d && d.isEnvironmentControls ? (d.getPivotPoint(s.fixedPoint), s.syncCameras(), d.adjustCamera(s.perspectiveCamera), d.adjustCamera(s.orthographicCamera)) : (s.fixedPoint.set(0, 0, -1).transformDirection(s.camera.matrixWorld).multiplyScalar(50).add(s.camera.position), s.syncCameras()), s.toggle(), m();
-    }
-  }, [i, s, m, d, n]), y(() => {
-    const a = () => m();
-    return s.addEventListener("transition-start", a), s.addEventListener("change", a), s.addEventListener("transition-end", a), () => {
-      s.removeEventListener("transition-start", a), s.removeEventListener("change", a), s.removeEventListener("transition-end", a);
-    };
-  }, [s, m]), z(s, c), F(() => {
-    s.update(), d && (d.enabled = !s.animating);
-    const { camera: a, size: f } = u();
-    if (!h && a === s.orthographicCamera) {
-      const C = f.width / f.height, b = s.orthographicCamera;
-      C !== b.right && (b.bottom = -1, b.top = 1, b.left = -C, b.right = C, b.updateProjectionMatrix());
-    }
-    s.animating && m();
-  }, -1);
+//#endregion
+//#region src/r3f/components/CameraTransition.jsx
+var Ee = x(function(e, t) {
+	let { mode: n = "perspective", onBeforeToggle: r, perspectiveCamera: i, orthographicCamera: a, ...s } = e, [c, l, u, d, f, p] = A((e) => [
+		e.set,
+		e.get,
+		e.invalidate,
+		e.controls,
+		e.camera,
+		e.size
+	]), m = E(() => {
+		let e = new o();
+		return e.autoSync = !1, f.isOrthographicCamera ? (e.orthographicCamera.copy(f), e.mode = "orthographic") : e.perspectiveCamera.copy(f), e.syncCameras(), e.mode = n, e;
+	}, []);
+	w(() => {
+		let { perspectiveCamera: e, orthographicCamera: t } = m, n = p.width / p.height;
+		e.aspect = n, e.updateProjectionMatrix(), t.left = -t.top * n, t.right = -t.left, e.updateProjectionMatrix();
+	}, [m, p]), I(m, t), w(() => {
+		let e = ({ camera: e }) => {
+			c(() => ({ camera: e }));
+		};
+		return c(() => ({ camera: m.camera })), m.addEventListener("camera-change", e), () => {
+			m.removeEventListener("camera-change", e);
+		};
+	}, [m, c]), w(() => {
+		let e = m.perspectiveCamera, t = m.orthographicCamera;
+		return m.perspectiveCamera = i || e, m.orthographicCamera = a || t, c(() => ({ camera: m.camera })), () => {
+			m.perspectiveCamera = e, m.orthographicCamera = t;
+		};
+	}, [
+		i,
+		a,
+		m,
+		c
+	]), w(() => {
+		if (n !== m.mode) {
+			let e = n === "orthographic" ? m.orthographicCamera : m.perspectiveCamera;
+			r ? r(m, e) : d && d.isEnvironmentControls ? (d.getPivotPoint(m.fixedPoint), m.syncCameras(), d.adjustCamera(m.perspectiveCamera), d.adjustCamera(m.orthographicCamera)) : (m.fixedPoint.set(0, 0, -1).transformDirection(m.camera.matrixWorld).multiplyScalar(50).add(m.camera.position), m.syncCameras()), m.toggle(), u();
+		}
+	}, [
+		n,
+		m,
+		u,
+		d,
+		r
+	]), w(() => {
+		let e = () => u();
+		return m.addEventListener("transition-start", e), m.addEventListener("change", e), m.addEventListener("transition-end", e), () => {
+			m.removeEventListener("transition-start", e), m.removeEventListener("change", e), m.removeEventListener("transition-end", e);
+		};
+	}, [m, u]), F(m, s), k(() => {
+		m.update(), d && (d.enabled = !m.animating);
+		let { camera: e, size: t } = l();
+		if (!a && e === m.orthographicCamera) {
+			let e = t.width / t.height, n = m.orthographicCamera;
+			e !== n.right && (n.bottom = -1, n.top = 1, n.left = -e, n.right = e, n.updateProjectionMatrix());
+		}
+		m.animating && u();
+	}, -1);
 });
-function ge(...o) {
-  return K((e) => {
-    o.forEach((t) => {
-      t && (typeof t == "function" ? t(e) : t.current = e);
-    });
-  }, o);
+//#endregion
+//#region src/r3f/utilities/useMultipleRefs.js
+function De(...e) {
+	return S((t) => {
+		e.forEach((e) => {
+			e && (typeof e == "function" ? e(t) : e.current = t);
+		});
+	}, e);
 }
-function Z(o, e) {
-  e(o) || o.children.forEach((t) => {
-    Z(t, e);
-  });
+//#endregion
+//#region src/r3f/utilities/SceneObserver.js
+function K(e, t) {
+	t(e) || e.children.forEach((e) => {
+		K(e, t);
+	});
 }
-class $e extends pe {
-  constructor() {
-    super(), this.objects = /* @__PURE__ */ new Set(), this.observed = /* @__PURE__ */ new Set(), this._addedCallback = ({ child: e }) => {
-      Z(e, (t) => this.observed.has(t) ? !0 : (this.objects.add(t), t.addEventListener("childadded", this._addedCallback), t.addEventListener("childremoved", this._removedCallback), this.dispatchEvent({ type: "childadded", child: e }), !1));
-    }, this._removedCallback = ({ child: e }) => {
-      Z(e, (t) => this.observed.has(t) ? !0 : (this.objects.delete(t), t.removeEventListener("childadded", this._addedCallback), t.removeEventListener("childremoved", this._removedCallback), this.dispatchEvent({ type: "childremoved", child: e }), !1));
-    };
-  }
-  observe(e) {
-    const { observed: t } = this;
-    this._addedCallback({ child: e }), t.add(e);
-  }
-  unobserve(e) {
-    const { observed: t } = this;
-    t.delete(e), this._removedCallback({ child: e });
-  }
-  dispose() {
-    this.observed.forEach((e) => {
-      this.unobserve(e);
-    });
-  }
-}
-const X = /* @__PURE__ */ new _e(), O = /* @__PURE__ */ new me(), U = /* @__PURE__ */ new me(), ue = /* @__PURE__ */ new we(), I = /* @__PURE__ */ new R(), de = /* @__PURE__ */ new A();
-class Be extends pe {
-  constructor() {
-    super(), this.autoRun = !0, this.queryMap = /* @__PURE__ */ new Map(), this.index = 0, this.queued = [], this.scheduled = !1, this.duration = 1, this.objects = [], this.observer = new $e(), this.ellipsoid = new We(), this.frame = new A(), this.cameras = /* @__PURE__ */ new Set();
-    const e = /* @__PURE__ */ (() => {
-      let t = !1;
-      return () => {
-        t || (t = !0, queueMicrotask(() => {
-          this.queryMap.forEach((i) => this._enqueue(i)), t = !1;
-        }));
-      };
-    })();
-    this.observer.addEventListener("childadded", e), this.observer.addEventListener("childremoved", e);
-  }
-  // job runner
-  _enqueue(e) {
-    e.queued || (this.queued.push(e), e.queued = !0, this._scheduleRun());
-  }
-  _runJobs() {
-    const { queued: e, cameras: t, duration: i } = this, n = performance.now();
-    for (t.forEach((r, h) => {
-      de.copy(r.matrixWorldInverse).premultiply(r.projectionMatrix), I.set(0, 0, -1).transformDirection(r.matrixWorld), O.start.setFromMatrixPosition(r.matrixWorld), O.end.addVectors(I, O.start);
-      for (let c = 0, l = e.length; c < l; c++) {
-        const u = e[c], { ray: m } = u;
-        let d, p;
-        if (u.point === null)
-          U.start.copy(m.origin), m.at(1, U.end), Je(O, U, ue), u.distance = ue.x * (1 - Math.abs(I.dot(m.direction))), u.inFrustum = !0;
-        else {
-          const v = U.start;
-          v.copy(u.point).applyMatrix4(de), v.x > -1 && v.x < 1 && v.y > -1 && v.y < 1 && v.z > -1 && v.z < 1 ? (u.distance = v.subVectors(u.point, O.start).dot(I), u.inFrustum = !0) : (u.distance = 0, u.inFrustum = !1);
-        }
-        h === 0 ? (u.distance = d, u.inFrustum = p) : (u.inFrustum = u.inFrustum || p, u.distance = Math.min(u.distance, d));
-      }
-    }), t.length !== 0 && e.sort((r, h) => r.point === null != (h.point === null) ? r.point === null ? 1 : -1 : r.inFrustum !== h.inFrustum ? r.inFrustum ? 1 : -1 : r.distance < 0 != h.distance < 0 ? r.distance < 0 ? -1 : 1 : h.distance - r.distance); e.length !== 0 && performance.now() - n < i; ) {
-      const r = e.pop();
-      r.queued = !1, this._updateQuery(r);
-    }
-    e.length !== 0 && this._scheduleRun();
-  }
-  _scheduleRun() {
-    this.autoRun && !this.scheduled && (this.scheduled = !0, requestAnimationFrame(() => {
-      this.scheduled = !1, this._runJobs();
-    }));
-  }
-  _updateQuery(e) {
-    X.ray.copy(e.ray), X.far = "lat" in e ? 1e4 + Math.max(...this.ellipsoid.radius) : 1 / 0;
-    const t = X.intersectObjects(this.objects)[0] || null;
-    t !== null && (e.point === null ? e.point = t.point.clone() : e.point.copy(t.point)), e.callback(t);
-  }
-  // add and remove cameras used for sorting
-  addCamera(e) {
-    const { queryMap: t, cameras: i } = this;
-    i.add(e), t.forEach((n) => this._enqueue(n));
-  }
-  deleteCamera(e) {
-    const { cameras: t } = this;
-    t.delete(e);
-  }
-  // run the given item index if possible
-  runIfNeeded(e) {
-    const { queryMap: t, queued: i } = this, n = t.get(e);
-    n.queued && (this._updateQuery(n), n.queued = !1, i.splice(i.indexOf(n), 1));
-  }
-  // set the scene used for query
-  setScene(...e) {
-    const { observer: t } = this;
-    t.dispose(), e.forEach((i) => t.observe(i)), this.objects = e, this._scheduleRun();
-  }
-  // update the ellipsoid and frame based on a tiles renderer, updating the item rays only if necessary
-  setEllipsoidFromTilesRenderer(e) {
-    const { queryMap: t, ellipsoid: i, frame: n } = this;
-    (!i.radius.equals(e.ellipsoid.radius) || !n.equals(e.group.matrixWorld)) && (i.copy(e.ellipsoid), n.copy(e.group.matrixWorld), t.forEach((r) => {
-      if ("lat" in r) {
-        const { lat: h, lon: c, ray: l } = r;
-        i.getCartographicToPosition(h, c, 1e4, l.origin).applyMatrix4(n), i.getCartographicToNormal(h, c, l.direction).transformDirection(n).multiplyScalar(-1);
-      }
-      this._enqueue(r);
-    }));
-  }
-  // register query callbacks
-  registerRayQuery(e, t) {
-    const i = this.index++, n = {
-      ray: e.clone(),
-      callback: t,
-      queued: !1,
-      distance: -1,
-      point: null
-    };
-    return this.queryMap.set(i, n), this._enqueue(n), i;
-  }
-  registerLatLonQuery(e, t, i) {
-    const { ellipsoid: n, frame: r } = this, h = this.index++, c = new ee();
-    n.getCartographicToPosition(e, t, 1e4, c.origin).applyMatrix4(r), n.getCartographicToNormal(e, t, c.direction).transformDirection(r).multiplyScalar(-1);
-    const l = {
-      ray: c.clone(),
-      lat: e,
-      lon: t,
-      callback: i,
-      queued: !1,
-      distance: -1,
-      point: null
-    };
-    return this.queryMap.set(h, l), this._enqueue(l), h;
-  }
-  unregisterQuery(e) {
-    const { queued: t, queryMap: i } = this, n = i.get(e);
-    i.delete(e), n && n.queued && (n.queued = !1, t.splice(t.indexOf(n), 1));
-  }
-  // dispose of everything
-  dispose() {
-    this.queryMap.clear(), this.queued.length = 0, this.objects.length = 0, this.observer.dispose();
-  }
-}
-const Je = (function() {
-  const o = new R(), e = new R(), t = new R();
-  return function(n, r, h) {
-    const c = n.start, l = o, u = r.start, m = e;
-    t.subVectors(c, u), o.subVectors(n.end, n.start), e.subVectors(r.end, r.start);
-    const d = t.dot(m), p = m.dot(l), v = m.dot(m), s = t.dot(l), f = l.dot(l) * v - p * p;
-    let C, b;
-    f !== 0 ? C = (d * p - s * v) / f : C = 0, b = (d + C * p) / v, h.x = C, h.y = b;
-  };
-})(), re = G(null), V = /* @__PURE__ */ new A(), Y = /* @__PURE__ */ new ee(), dt = _(function(e, t) {
-  const {
-    interpolationFactor: i = 0.025,
-    onQueryUpdate: n = null,
-    ...r
-  } = e, h = q(P), c = q(re), l = M(({ invalidate: s }) => s), u = L(() => new R(), []), m = L(() => ({ value: !1 }), []), d = L(() => ({ value: !1 }), []), p = T(null), v = K((s) => {
-    if (h === null || s === null || p.current === null)
-      return;
-    const { lat: a, lon: f, rayorigin: C, raydirection: b } = r;
-    a !== null && f !== null ? (u.copy(s.point), d.value = !0, c.ellipsoid.getObjectFrame(a, f, 0, 0, 0, 0, V, he).premultiply(h.group.matrixWorld), p.current.quaternion.setFromRotationMatrix(V), l()) : C !== null && b !== null && (u.copy(s.point), d.value = !0, p.current.quaternion.identity(), l()), n && n(s);
-  }, [l, d, c.ellipsoid, r, u, h, n]);
-  return F((s, a) => {
-    if (p.current && (p.current.visible = m.value), p.current && d.value)
-      if (m.value === !1)
-        m.value = !0, p.current.position.copy(u);
-      else {
-        const f = 1 - 2 ** (-a / i);
-        p.current.position.distanceToSquared(u) > 1e-6 ? (p.current.position.lerp(
-          u,
-          i === 0 ? 1 : f
-        ), l()) : p.current.position.copy(u);
-      }
-  }), /* @__PURE__ */ g(
-    Xe,
-    {
-      ref: ge(p, t),
-      onQueryUpdate: v,
-      ...r
-    }
-  );
-}), Xe = _(function(e, t) {
-  const {
-    component: i = /* @__PURE__ */ g("group", {}),
-    lat: n = null,
-    lon: r = null,
-    rayorigin: h = null,
-    raydirection: c = null,
-    onQueryUpdate: l = null,
-    ...u
-  } = e, m = T(null), d = q(P), p = q(re), v = M(({ invalidate: a }) => a), s = L(() => new R(), []);
-  return y(() => {
-    const a = (f) => {
-      l ? l(f) : d && f !== null && m.current !== null && (n !== null && r !== null ? (m.current.position.copy(f.point), p.ellipsoid.getObjectFrame(n, r, 0, 0, 0, 0, V, he).premultiply(d.group.matrixWorld), m.current.quaternion.setFromRotationMatrix(V), v()) : h !== null && c !== null && (m.current.position.copy(f.point), m.current.quaternion.identity(), v()));
-    };
-    if (n !== null && r !== null) {
-      const f = p.registerLatLonQuery(n, r, a);
-      return () => p.unregisterQuery(f);
-    } else if (h !== null && c !== null) {
-      Y.origin.copy(h), Y.direction.copy(c);
-      const f = p.registerRayQuery(Y, a);
-      return () => p.unregisterQuery(f);
-    }
-  }, [n, r, h, c, p, d, v, s, l]), xe(i, { ...u, ref: ge(m, t), raycast: () => !1 });
-}), pt = _(function(e, t) {
-  const i = M(({ scene: m }) => m), {
-    scene: n = i,
-    children: r,
-    ...h
-  } = e, c = q(P), l = L(() => new Be(), []), u = M(({ camera: m }) => m);
-  return z(l, h), y(() => () => l.dispose(), [l]), y(() => {
-    l.setScene(...Array.isArray(n) ? n : [n]);
-  }, [l, n]), y(() => {
-    l.addCamera(u);
-  }, [l, u]), F(() => {
-    c && l.setEllipsoidFromTilesRenderer(c);
-  }), D(l, t), /* @__PURE__ */ g(re.Provider, { value: l, children: /* @__PURE__ */ g("group", { matrixAutoUpdate: !1, matrixWorldAutoUpdate: !1, children: r }) });
+var Oe = class extends c {
+	constructor() {
+		super(), this.objects = /* @__PURE__ */ new Set(), this.observed = /* @__PURE__ */ new Set(), this._addedCallback = ({ child: e }) => {
+			K(e, (t) => this.observed.has(t) ? !0 : (this.objects.add(t), t.addEventListener("childadded", this._addedCallback), t.addEventListener("childremoved", this._removedCallback), this.dispatchEvent({
+				type: "childadded",
+				child: e
+			}), !1));
+		}, this._removedCallback = ({ child: e }) => {
+			K(e, (t) => this.observed.has(t) ? !0 : (this.objects.delete(t), t.removeEventListener("childadded", this._addedCallback), t.removeEventListener("childremoved", this._removedCallback), this.dispatchEvent({
+				type: "childremoved",
+				child: e
+			}), !1));
+		};
+	}
+	observe(e) {
+		let { observed: t } = this;
+		this._addedCallback({ child: e }), t.add(e);
+	}
+	unobserve(e) {
+		let { observed: t } = this;
+		t.delete(e), this._removedCallback({ child: e });
+	}
+	dispose() {
+		this.observed.forEach((e) => {
+			this.unobserve(e);
+		});
+	}
+}, q = /* @__PURE__ */ new m(), J = /* @__PURE__ */ new l(), Y = /* @__PURE__ */ new l(), ke = /* @__PURE__ */ new g(), X = /* @__PURE__ */ new _(), Ae = /* @__PURE__ */ new u(), je = class extends c {
+	constructor() {
+		super(), this.autoRun = !0, this.queryMap = /* @__PURE__ */ new Map(), this.index = 0, this.queued = [], this.scheduled = !1, this.duration = 1, this.objects = [], this.observer = new Oe(), this.ellipsoid = new r(), this.frame = new u(), this.cameras = /* @__PURE__ */ new Set();
+		let e = (() => {
+			let e = !1;
+			return () => {
+				e || (e = !0, queueMicrotask(() => {
+					this.queryMap.forEach((e) => this._enqueue(e)), e = !1;
+				}));
+			};
+		})();
+		this.observer.addEventListener("childadded", e), this.observer.addEventListener("childremoved", e);
+	}
+	_enqueue(e) {
+		e.queued || (this.queued.push(e), e.queued = !0, this._scheduleRun());
+	}
+	_runJobs() {
+		let { queued: e, cameras: t, duration: n } = this, r = performance.now();
+		for (t.forEach((t, n) => {
+			Ae.copy(t.matrixWorldInverse).premultiply(t.projectionMatrix), X.set(0, 0, -1).transformDirection(t.matrixWorld), J.start.setFromMatrixPosition(t.matrixWorld), J.end.addVectors(X, J.start);
+			for (let t = 0, r = e.length; t < r; t++) {
+				let r = e[t], { ray: i } = r;
+				if (r.point === null) Y.start.copy(i.origin), i.at(1, Y.end), Me(J, Y, ke), r.distance = ke.x * (1 - Math.abs(X.dot(i.direction))), r.inFrustum = !0;
+				else {
+					let e = Y.start;
+					e.copy(r.point).applyMatrix4(Ae), e.x > -1 && e.x < 1 && e.y > -1 && e.y < 1 && e.z > -1 && e.z < 1 ? (r.distance = e.subVectors(r.point, J.start).dot(X), r.inFrustum = !0) : (r.distance = 0, r.inFrustum = !1);
+				}
+				n === 0 ? (r.distance = void 0, r.inFrustum = void 0) : (r.inFrustum = r.inFrustum || void 0, r.distance = Math.min(r.distance, void 0));
+			}
+		}), t.length !== 0 && e.sort((e, t) => e.point === null == (t.point === null) ? e.inFrustum === t.inFrustum ? e.distance < 0 == t.distance < 0 ? t.distance - e.distance : e.distance < 0 ? -1 : 1 : e.inFrustum ? 1 : -1 : e.point === null ? 1 : -1); e.length !== 0 && performance.now() - r < n;) {
+			let t = e.pop();
+			t.queued = !1, this._updateQuery(t);
+		}
+		e.length !== 0 && this._scheduleRun();
+	}
+	_scheduleRun() {
+		this.autoRun && !this.scheduled && (this.scheduled = !0, e.requestAnimationFrame(() => {
+			this.scheduled = !1, this._runJobs();
+		}));
+	}
+	_updateQuery(e) {
+		q.ray.copy(e.ray), q.far = "lat" in e ? 1e4 + Math.max(...this.ellipsoid.radius) : Infinity;
+		let t = q.intersectObjects(this.objects)[0] || null;
+		t !== null && (e.point === null ? e.point = t.point.clone() : e.point.copy(t.point)), e.callback(t);
+	}
+	addCamera(e) {
+		let { queryMap: t, cameras: n } = this;
+		n.add(e), t.forEach((e) => this._enqueue(e));
+	}
+	deleteCamera(e) {
+		let { cameras: t } = this;
+		t.delete(e);
+	}
+	runIfNeeded(e) {
+		let { queryMap: t, queued: n } = this, r = t.get(e);
+		r.queued && (this._updateQuery(r), r.queued = !1, n.splice(n.indexOf(r), 1));
+	}
+	setScene(...e) {
+		let { observer: t } = this;
+		t.dispose(), e.forEach((e) => t.observe(e)), this.objects = e, this._scheduleRun();
+	}
+	setEllipsoidFromTilesRenderer(e) {
+		let { queryMap: t, ellipsoid: n, frame: r } = this;
+		(!n.radius.equals(e.ellipsoid.radius) || !r.equals(e.group.matrixWorld)) && (n.copy(e.ellipsoid), r.copy(e.group.matrixWorld), t.forEach((e) => {
+			if ("lat" in e) {
+				let { lat: t, lon: i, ray: a } = e;
+				n.getCartographicToPosition(t, i, 1e4, a.origin).applyMatrix4(r), n.getCartographicToNormal(t, i, a.direction).transformDirection(r).multiplyScalar(-1);
+			}
+			this._enqueue(e);
+		}));
+	}
+	registerRayQuery(e, t) {
+		let n = this.index++, r = {
+			ray: e.clone(),
+			callback: t,
+			queued: !1,
+			distance: -1,
+			point: null
+		};
+		return this.queryMap.set(n, r), this._enqueue(r), n;
+	}
+	registerLatLonQuery(e, t, n) {
+		let { ellipsoid: r, frame: i } = this, a = this.index++, o = new p();
+		r.getCartographicToPosition(e, t, 1e4, o.origin).applyMatrix4(i), r.getCartographicToNormal(e, t, o.direction).transformDirection(i).multiplyScalar(-1);
+		let s = {
+			ray: o.clone(),
+			lat: e,
+			lon: t,
+			callback: n,
+			queued: !1,
+			distance: -1,
+			point: null
+		};
+		return this.queryMap.set(a, s), this._enqueue(s), a;
+	}
+	unregisterQuery(e) {
+		let { queued: t, queryMap: n } = this, r = n.get(e);
+		n.delete(e), r && r.queued && (r.queued = !1, t.splice(t.indexOf(r), 1));
+	}
+	dispose() {
+		this.queryMap.clear(), this.queued.length = 0, this.objects.length = 0, this.observer.dispose();
+	}
+}, Me = (function() {
+	let e = new _(), t = new _(), n = new _();
+	return function(r, i, a) {
+		let o = r.start, s = e, c = i.start, l = t;
+		n.subVectors(o, c), e.subVectors(r.end, r.start), t.subVectors(i.end, i.start);
+		let u = n.dot(l), d = l.dot(s), f = l.dot(l), p = n.dot(s), m = s.dot(s) * f - d * d, h, g;
+		h = m === 0 ? 0 : (u * d - p * f) / m, g = (u + h * d) / f, a.x = h, a.y = g;
+	};
+})(), Z = b(null), Q = /* @__PURE__ */ new u(), $ = /* @__PURE__ */ new p(), Ne = x(function(e, t) {
+	let { interpolationFactor: n = .025, onQueryUpdate: r = null, ...i } = e, a = C(L), o = C(Z), s = A(({ invalidate: e }) => e), c = E(() => new _(), []), l = E(() => ({ value: !1 }), []), u = E(() => ({ value: !1 }), []), d = D(null), f = S((e) => {
+		if (a === null || e === null || d.current === null) return;
+		let { lat: t, lon: n, rayorigin: l, raydirection: f } = i;
+		t !== null && n !== null ? (c.copy(e.point), u.value = !0, o.ellipsoid.getObjectFrame(t, n, 0, 0, 0, 0, Q, 2).premultiply(a.group.matrixWorld), d.current.quaternion.setFromRotationMatrix(Q), s()) : l !== null && f !== null && (c.copy(e.point), u.value = !0, d.current.quaternion.identity(), s()), r && r(e);
+	}, [
+		s,
+		u,
+		o.ellipsoid,
+		i,
+		c,
+		a,
+		r
+	]);
+	return k((e, t) => {
+		if (d.current && (d.current.visible = l.value), d.current && u.value) if (l.value === !1) l.value = !0, d.current.position.copy(c);
+		else {
+			let e = 1 - 2 ** (-t / n);
+			d.current.position.distanceToSquared(c) > 1e-6 ? (d.current.position.lerp(c, n === 0 ? 1 : e), s()) : d.current.position.copy(c);
+		}
+	}), /* @__PURE__ */ M(Pe, {
+		ref: De(d, t),
+		onQueryUpdate: f,
+		...i
+	});
+}), Pe = x(function(e, t) {
+	let { component: n = /* @__PURE__ */ M("group", {}), lat: r = null, lon: i = null, rayorigin: a = null, raydirection: o = null, onQueryUpdate: s = null, ...c } = e, l = D(null), u = C(L), d = C(Z), f = A(({ invalidate: e }) => e);
+	return w(() => {
+		let e = (e) => {
+			s ? s(e) : u && e !== null && l.current !== null && (r !== null && i !== null ? (l.current.position.copy(e.point), d.ellipsoid.getObjectFrame(r, i, 0, 0, 0, 0, Q, 2).premultiply(u.group.matrixWorld), l.current.quaternion.setFromRotationMatrix(Q), f()) : a !== null && o !== null && (l.current.position.copy(e.point), l.current.quaternion.identity(), f()));
+		};
+		if (r !== null && i !== null) {
+			let t = d.registerLatLonQuery(r, i, e);
+			return () => d.unregisterQuery(t);
+		} else if (a !== null && o !== null) {
+			$.origin.copy(a), $.direction.copy(o);
+			let t = d.registerRayQuery($, e);
+			return () => d.unregisterQuery(t);
+		}
+	}, [
+		r,
+		i,
+		a,
+		o,
+		d,
+		u,
+		f,
+		E(() => new _(), []),
+		s
+	]), y(n, {
+		...c,
+		ref: De(l, t),
+		raycast: () => !1
+	});
+}), Fe = x(function(e, t) {
+	let n = A(({ scene: e }) => e), { scene: r = n, children: i, ...a } = e, o = C(L), s = E(() => new je(), []), c = A(({ camera: e }) => e);
+	return F(s, a), w(() => () => s.dispose(), [s]), w(() => {
+		s.setScene(...Array.isArray(r) ? r : [r]);
+	}, [s, r]), w(() => {
+		s.addCamera(c);
+	}, [s, c]), k(() => {
+		o && s.setEllipsoidFromTilesRenderer(o);
+	}), I(s, t), /* @__PURE__ */ M(Z.Provider, {
+		value: s,
+		children: /* @__PURE__ */ M("group", {
+			matrixAutoUpdate: !1,
+			matrixWorldAutoUpdate: !1,
+			children: i
+		})
+	});
 });
-export {
-  dt as AnimatedSettledObject,
-  ut as CameraTransition,
-  Ue as CanvasDOMOverlay,
-  ct as CompassGizmo,
-  rt as EastNorthUpFrame,
-  ne as EllipsoidContext,
-  at as EnvironmentControls,
-  lt as GlobeControls,
-  Xe as SettledObject,
-  pt as SettledObjects,
-  st as TilesAttributionOverlay,
-  it as TilesPlugin,
-  De as TilesPluginContext,
-  ot as TilesRenderer,
-  P as TilesRendererContext
-};
+//#endregion
+export { Ne as AnimatedSettledObject, Ee as CameraTransition, he as CanvasDOMOverlay, Te as CompassGizmo, fe as EastNorthUpFrame, R as EllipsoidContext, ye as EnvironmentControls, be as GlobeControls, Pe as SettledObject, Fe as SettledObjects, _e as TilesAttributionOverlay, pe as TilesPlugin, ue as TilesPluginContext, me as TilesRenderer, L as TilesRendererContext };
+
 //# sourceMappingURL=index.r3f.js.map

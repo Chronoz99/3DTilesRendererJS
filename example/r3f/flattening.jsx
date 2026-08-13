@@ -5,12 +5,12 @@ import { Environment, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import { TilesPlugin, TilesRenderer, EnvironmentControls, EastNorthUpFrame } from '3d-tiles-renderer/r3f';
 import { TilesFadePlugin, GLTFExtensionsPlugin, ReorientationPlugin, CesiumIonAuthPlugin, UpdateOnChangePlugin } from '3d-tiles-renderer/plugins';
 import { TileFlatteningPlugin, TileFlatteningShape } from './plugins/TileFlatteningPlugin.jsx';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import {
 	MathUtils,
 } from 'three';
 
-const dracoLoader = new DRACOLoader().setDecoderPath( 'https://www.gstatic.com/draco/v1/decoders/' );
+const dracoLoader = new DRACOLoader();
 
 const LAT = 35.3606 * MathUtils.DEG2RAD;
 const LON = 138.7274 * MathUtils.DEG2RAD;

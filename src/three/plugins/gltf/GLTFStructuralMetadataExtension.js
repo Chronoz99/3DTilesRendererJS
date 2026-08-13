@@ -1,5 +1,3 @@
-// https://github.com/CesiumGS/glTF/tree/3d-tiles-next/extensions/2.0/Vendor/EXT_structural_metadata
-
 import { FileLoader } from 'three';
 import { StructuralMetadata } from './metadata/classes/StructuralMetadata.js';
 
@@ -43,19 +41,19 @@ function getRelevantBuffers( parser, propertyTables = [] ) {
 			const { values, arrayOffsets, stringOffsets } = properties[ key ];
 			if ( result[ values ] === null ) {
 
-				result[ values ] = parser.loadBufferView( values );
+				result[ values ] = parser.getDependency( 'bufferView', values );
 
 			}
 
 			if ( result[ arrayOffsets ] === null ) {
 
-				result[ arrayOffsets ] = parser.loadBufferView( arrayOffsets );
+				result[ arrayOffsets ] = parser.getDependency( 'bufferView', arrayOffsets );
 
 			}
 
 			if ( result[ stringOffsets ] === null ) {
 
-				result[ stringOffsets ] = parser.loadBufferView( stringOffsets );
+				result[ stringOffsets ] = parser.getDependency( 'bufferView', stringOffsets );
 
 			}
 
@@ -67,6 +65,14 @@ function getRelevantBuffers( parser, propertyTables = [] ) {
 
 }
 
+/**
+ * GLTF loader plugin that parses the {@link https://github.com/CesiumGS/glTF/tree/3d-tiles-next/extensions/2.0/Vendor/EXT_structural_metadata EXT_structural_metadata}
+ * extension and attaches a `StructuralMetadata` instance to `scene.userData.structuralMetadata`
+ * (and to each primitive mesh). Register with a `GLTFLoader` via
+ * `loader.register( () => new GLTFStructuralMetadataExtension() )`.
+ * @note 64-bit integer types are not fully supported.
+ * @param {Object} parser The GLTF parser instance provided by the loader.
+ */
 export class GLTFStructuralMetadataExtension {
 
 	constructor( parser ) {
@@ -94,13 +100,13 @@ export class GLTFStructuralMetadataExtension {
 			// TODO: cache the loaded schema so we can share it and dispose of it when the
 			// extension is no longer available
 			const { manager, path, requestHeader, crossOrigin } = parser.options;
-			const finalUri = new URL( rootExtension.schemaUri, path ).toString();
+			const finalUrl = new URL( rootExtension.schemaUri, path ).toString();
 			const fileLoader = new FileLoader( manager );
 			fileLoader.setCrossOrigin( crossOrigin );
 			fileLoader.setResponseType( 'json' );
 			fileLoader.setRequestHeader( requestHeader );
 
-			schemaPromise = fileLoader.loadAsync( finalUri )
+			schemaPromise = fileLoader.loadAsync( finalUrl )
 				.then( schema => {
 
 					rootExtension = { ...rootExtension, schema };

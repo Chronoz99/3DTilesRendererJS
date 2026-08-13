@@ -1,3 +1,4 @@
+/** @import { Object3D, Camera } from 'three' */
 import {
 	Matrix4,
 	Quaternion,
@@ -7,7 +8,7 @@ import {
 	Ray,
 	Group,
 } from 'three';
-import { DRAG, ZOOM, EnvironmentControls, NONE } from './EnvironmentControls.js';
+import { DRAG, ZOOM, FREE_ROTATE, EnvironmentControls, NONE } from './EnvironmentControls.js';
 import { makeRotateAroundPoint, adjustedPointerToCoords, setRaycasterFromCamera } from './utils.js';
 import { Ellipsoid } from '../math/Ellipsoid.js';
 import { WGS84_ELLIPSOID } from '../math/GeoConstants.js';
@@ -30,21 +31,32 @@ const _latLon = {};
 
 // hand picked minimum elevation to tune far plane near surface
 const MIN_ELEVATION = 2550;
+/**
+ * Camera controls for navigating a globe-shaped tileset. Extends EnvironmentControls with
+ * ellipsoid-aware rotation, globe inertia, and automatic near/far plane adjustment.
+ * @extends EnvironmentControls
+ * @param {Object3D} [scene=null] - The scene to raycast against for surface interaction.
+ * @param {Camera} [camera=null] - The camera to control.
+ * @param {HTMLElement} [domElement=null] - The DOM element to attach pointer events to.
+ */
 export class GlobeControls extends EnvironmentControls {
 
-	get tilesGroup() {
-
-		console.warn( 'GlobeControls: "tilesGroup" has been deprecated. Use "ellipsoidGroup", instead.' );
-		return this.ellipsoidFrame;
-
-	}
-
+	/**
+	 * The world matrix of `ellipsoidGroup`, representing the ellipsoid's coordinate frame.
+	 * @type {Matrix4}
+	 * @readonly
+	 */
 	get ellipsoidFrame() {
 
 		return this.ellipsoidGroup.matrixWorld;
 
 	}
 
+	/**
+	 * The inverse of `ellipsoidFrame`.
+	 * @type {Matrix4}
+	 * @readonly
+	 */
 	get ellipsoidFrameInverse() {
 
 		const { ellipsoidGroup, ellipsoidFrame, _ellipsoidFrameInverse } = this;
@@ -54,7 +66,7 @@ export class GlobeControls extends EnvironmentControls {
 
 	}
 
-	constructor( scene = null, camera = null, domElement = null, tilesRenderer = null ) {
+	constructor( scene = null, camera = null, domElement = null ) {
 
 		// store which mode the drag stats are in
 		super( scene, camera, domElement );
@@ -64,37 +76,59 @@ export class GlobeControls extends EnvironmentControls {
 		this._dragMode = 0;
 		this._rotationMode = 0;
 		this.maxZoom = 0.01;
+
+		/**
+		 * Fraction of the near plane distance added as a buffer.
+		 * @type {number}
+		 * @default 0.25
+		 */
 		this.nearMargin = 0.25;
+
+		/**
+		 * Fraction of the far plane distance added as a buffer.
+		 * @type {number}
+		 * @default 0
+		 */
 		this.farMargin = 0;
 		this.useFallbackPlane = false;
 		this.autoAdjustCameraRotation = false;
 
+		/**
+		 * Accumulated globe rotation inertia quaternion. Applied each frame when globe inertia is active.
+		 * @type {Quaternion}
+		 * @default new Quaternion()
+		 */
 		this.globeInertia = new Quaternion();
+
+		/**
+		 * Magnitude of the current globe rotation inertia. Decays to zero over time.
+		 * @type {number}
+		 * @default 0
+		 */
 		this.globeInertiaFactor = 0;
 
+		/**
+		 * The ellipsoid model used for surface interaction and up-direction calculation.
+		 * @type {Ellipsoid}
+		 * @default WGS84_ELLIPSOID
+		 */
 		this.ellipsoid = WGS84_ELLIPSOID.clone();
+
+		/**
+		 * The Three.js group whose world matrix defines the ellipsoid's coordinate frame.
+		 * @type {Group}
+		 * @default new Group()
+		 */
 		this.ellipsoidGroup = new Group();
 		this._ellipsoidFrameInverse = new Matrix4();
 
-		if ( tilesRenderer !== null ) {
-
-			this.setTilesRenderer( tilesRenderer );
-
-		}
-
 	}
 
-	setTilesRenderer( tilesRenderer ) {
-
-		super.setTilesRenderer( tilesRenderer );
-		if ( tilesRenderer !== null ) {
-
-			this.setEllipsoid( tilesRenderer.ellipsoid, tilesRenderer.group );
-
-		}
-
-	}
-
+	/**
+	 * Sets the ellipsoid model and its scene group for globe-aware interaction.
+	 * @param {Ellipsoid} [ellipsoid] - Ellipsoid to use. Defaults to a WGS84 clone.
+	 * @param {Group} [ellipsoidGroup] - Group whose world matrix defines the ellipsoid frame.
+	 */
 	setEllipsoid( ellipsoid, ellipsoidGroup ) {
 
 		this.ellipsoid = ellipsoid || WGS84_ELLIPSOID.clone();
@@ -133,7 +167,11 @@ export class GlobeControls extends EnvironmentControls {
 
 	}
 
-	// get the vector to the center of the provided globe
+	/**
+	 * Returns the vector from the camera to the center of the ellipsoid in world space.
+	 * @param {Vector3} target
+	 * @returns {Vector3}
+	 */
 	getVectorToCenter( target ) {
 
 		const { ellipsoidFrame, camera } = this;
@@ -143,7 +181,10 @@ export class GlobeControls extends EnvironmentControls {
 
 	}
 
-	// get the distance to the center of the globe
+	/**
+	 * Returns the distance from the camera to the center of the ellipsoid.
+	 * @returns {number}
+	 */
 	getDistanceToCenter() {
 
 		return this
@@ -183,7 +224,7 @@ export class GlobeControls extends EnvironmentControls {
 
 	}
 
-	update( deltaTime = Math.min( this.clock.getDelta(), 64 / 1000 ) ) {
+	update( deltaTime = Math.min( this._getDeltaTime(), 64 / 1000 ) ) {
 
 		if ( ! this.enabled || ! this.camera || deltaTime === 0 ) {
 
@@ -220,7 +261,7 @@ export class GlobeControls extends EnvironmentControls {
 		this.adjustCamera( camera );
 
 		// align the camera up vector if the camera as updated
-		if ( adjustCameraRotation && this._isNearControls() ) {
+		if ( adjustCameraRotation && ( this._isNearControls() || this.state === FREE_ROTATE ) ) {
 
 			this.getCameraUpDirection( _globalUp );
 			this._alignCameraUp( _globalUp, 1 );
@@ -240,7 +281,7 @@ export class GlobeControls extends EnvironmentControls {
 		super.adjustCamera( camera );
 
 		const { ellipsoidFrame, ellipsoidFrameInverse, ellipsoid, nearMargin, farMargin } = this;
-		const maxRadius = Math.max( ...ellipsoid.radius );
+		const maxRadius = this._getMaxWorldRadius();
 		if ( camera.isPerspectiveCamera ) {
 
 			// adjust the clip planes
@@ -400,6 +441,54 @@ export class GlobeControls extends EnvironmentControls {
 
 	}
 
+	_getFlightSpeedScale() {
+
+		// Scale speed proportionally to altitude so movement feels consistent at any distance.
+		// The 1000 m floor prevents movement becoming imperceptibly slow near the surface.
+		const altitude = this.getDistanceToCenter() - this._getMaxWorldRadius();
+		return 2 * Math.max( altitude, 1000 );
+
+	}
+
+	_updateFlight( deltaTime ) {
+
+		const { camera } = this;
+
+		const didFly = super._updateFlight( deltaTime );
+		if ( didFly ) {
+
+			// prevent flying past the point where the globe would be too small, just like mouse zoom.
+			const maxDistance = this._getMaxPerspectiveDistance();
+			const distToCenter = this.getDistanceToCenter();
+			if ( distToCenter > maxDistance ) {
+
+				this.getVectorToCenter( _vec ).normalize();
+				camera.position.addScaledVector( _vec, distToCenter - maxDistance );
+				camera.updateMatrixWorld();
+
+			}
+
+			// Outside the near-controls zone (high altitude / space view), gently nudge the
+			// camera to keep the globe centered and the horizon level — matching the behavior
+			// of scroll-zoom at the same distance. Alpha scales from 0 at the transition
+			// threshold to full strength at maxDistance.
+			if ( ! this._isNearControls() ) {
+
+				const distanceAlpha = MathUtils.clamp(
+					MathUtils.mapLinear( this.getDistanceToCenter(), this._getPerspectiveTransitionDistance(), maxDistance, 0, 1 ),
+					0, 1,
+				);
+				this._tiltTowardsCenter( 0.02 * distanceAlpha );
+				this._alignCameraUpToNorth( 0.01 * distanceAlpha );
+
+			}
+
+		}
+
+		return didFly;
+
+	}
+
 	_updatePosition( deltaTime ) {
 
 		if ( this.state === DRAG ) {
@@ -481,6 +570,14 @@ export class GlobeControls extends EnvironmentControls {
 	// disable rotation once we're outside the control transition
 	_updateRotation( ...args ) {
 
+		// FREE_ROTATE is always allowed regardless of globe proximity
+		if ( this.state === FREE_ROTATE ) {
+
+			super._updateRotation( ...args );
+			return;
+
+		}
+
 		if ( this._rotationMode === 1 || this._isNearControls() ) {
 
 			this._rotationMode = 1;
@@ -493,12 +590,11 @@ export class GlobeControls extends EnvironmentControls {
 
 		}
 
-
 	}
 
 	_updateZoom() {
 
-		const { zoomDelta, ellipsoid, zoomSpeed, zoomPoint, camera, maxZoom, state } = this;
+		const { zoomDelta, zoomSpeed, zoomPoint, camera, maxZoom, state } = this;
 
 		if ( state !== ZOOM && zoomDelta === 0 ) {
 
@@ -562,7 +658,7 @@ export class GlobeControls extends EnvironmentControls {
 
 			// calculate zoom in a similar way to environment controls so
 			// the zoom speeds are comparable
-			const dist = this.getDistanceToCenter() - ellipsoid.radius.x;
+			const dist = this.getDistanceToCenter() - this._getMaxWorldRadius();
 			const scale = zoomDelta * dist * zoomSpeed * 0.0025;
 			const clampedScale = Math.max( scale, Math.min( this.getDistanceToCenter() - maxDistance, 0 ) );
 
@@ -628,7 +724,7 @@ export class GlobeControls extends EnvironmentControls {
 	// returns the perspective camera transition distance can move to based on globe size and fov
 	_getPerspectiveTransitionDistance() {
 
-		const { camera, ellipsoid } = this;
+		const { camera } = this;
 		if ( ! camera.isPerspectiveCamera ) {
 
 			throw new Error();
@@ -636,7 +732,7 @@ export class GlobeControls extends EnvironmentControls {
 		}
 
 		// When the smallest fov spans 65% of the ellipsoid then we use the near controls
-		const ellipsoidRadius = Math.max( ...ellipsoid.radius );
+		const ellipsoidRadius = this._getMaxWorldRadius();
 		const fovHoriz = 2 * Math.atan( Math.tan( MathUtils.DEG2RAD * camera.fov * 0.5 ) * camera.aspect );
 		const distVert = ellipsoidRadius / Math.tan( MathUtils.DEG2RAD * camera.fov * 0.5 );
 		const distHoriz = ellipsoidRadius / Math.tan( fovHoriz * 0.5 );
@@ -649,7 +745,7 @@ export class GlobeControls extends EnvironmentControls {
 	// returns the max distance the perspective camera can move to based on globe size and fov
 	_getMaxPerspectiveDistance() {
 
-		const { camera, ellipsoid } = this;
+		const { camera } = this;
 		if ( ! camera.isPerspectiveCamera ) {
 
 			throw new Error();
@@ -657,7 +753,7 @@ export class GlobeControls extends EnvironmentControls {
 		}
 
 		// allow for zooming out such that the ellipsoid is half the size of the largest fov
-		const ellipsoidRadius = Math.max( ...ellipsoid.radius );
+		const ellipsoidRadius = this._getMaxWorldRadius();
 		const fovHoriz = 2 * Math.atan( Math.tan( MathUtils.DEG2RAD * camera.fov * 0.5 ) * camera.aspect );
 		const distVert = ellipsoidRadius / Math.tan( MathUtils.DEG2RAD * camera.fov * 0.5 );
 		const distHoriz = ellipsoidRadius / Math.tan( fovHoriz * 0.5 );
@@ -670,7 +766,7 @@ export class GlobeControls extends EnvironmentControls {
 	// returns the transition threshold for orthographic zoom based on the globe size and camera settings
 	_getOrthographicTransitionZoom() {
 
-		const { camera, ellipsoid } = this;
+		const { camera } = this;
 		if ( ! camera.isOrthographicCamera ) {
 
 			throw new Error();
@@ -680,7 +776,7 @@ export class GlobeControls extends EnvironmentControls {
 		const orthoHeight = ( camera.top - camera.bottom );
 		const orthoWidth = ( camera.right - camera.left );
 		const orthoSize = Math.max( orthoHeight, orthoWidth );
-		const ellipsoidRadius = Math.max( ...ellipsoid.radius );
+		const ellipsoidRadius = this._getMaxWorldRadius();
 		const ellipsoidDiameter = 2 * ellipsoidRadius;
 		return 2 * orthoSize / ellipsoidDiameter;
 
@@ -689,7 +785,7 @@ export class GlobeControls extends EnvironmentControls {
 	// returns the minimum allowed orthographic zoom based on the globe size and camera settings
 	_getMinOrthographicZoom() {
 
-		const { camera, ellipsoid } = this;
+		const { camera } = this;
 		if ( ! camera.isOrthographicCamera ) {
 
 			throw new Error();
@@ -699,7 +795,7 @@ export class GlobeControls extends EnvironmentControls {
 		const orthoHeight = ( camera.top - camera.bottom );
 		const orthoWidth = ( camera.right - camera.left );
 		const orthoSize = Math.min( orthoHeight, orthoWidth );
-		const ellipsoidRadius = Math.max( ...ellipsoid.radius );
+		const ellipsoidRadius = this._getMaxWorldRadius();
 		const ellipsoidDiameter = 2 * ellipsoidRadius;
 		return 0.7 * orthoSize / ellipsoidDiameter;
 
@@ -785,6 +881,13 @@ export class GlobeControls extends EnvironmentControls {
 			return result;
 
 		}
+
+	}
+
+	_getMaxWorldRadius() {
+
+		const { ellipsoid, ellipsoidFrame } = this;
+		return Math.max( ...ellipsoid.radius ) * ellipsoidFrame.getMaxScaleOnAxis();
 
 	}
 

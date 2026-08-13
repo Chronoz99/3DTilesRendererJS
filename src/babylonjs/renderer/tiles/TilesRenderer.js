@@ -1,5 +1,10 @@
+/** @import { Scene } from '@babylonjs/core/scene' */
 import { TilesRendererBase, LoaderUtils } from '3d-tiles-renderer/core';
-import { TransformNode, Matrix, Vector3, Frustum, Observable, Plane } from '@babylonjs/core';
+import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
+import { Matrix, Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Frustum } from '@babylonjs/core/Maths/math.frustum';
+import { Observable } from '@babylonjs/core/Misc/observable';
+import { Plane } from '@babylonjs/core/Maths/math.plane';
 import { B3DMLoader } from '../loaders/B3DMLoader.js';
 import { GLTFLoader } from '../loaders/GLTFLoader.js';
 import { TileBoundingVolume } from '../math/TileBoundingVolume.js';
@@ -9,15 +14,38 @@ const _worldToTiles = /* @__PURE__ */ Matrix.Identity();
 const _cameraPositionInTiles = /* @__PURE__ */ new Vector3();
 const _frustumPlanes = /* @__PURE__ */ new Array( 6 ).fill( null ).map( () => new Plane( 0, 0, 0, 0 ) );
 
-// TODO: implementation does not support left handed coordinate system
+/**
+ * Babylon.js implementation of the 3D Tiles renderer. Manages tile loading, caching, traversal,
+ * and scene management using the Babylon.js scene graph and camera APIs. Dispatches all events
+ * defined by TilesRendererBase via Babylon.js Observables.
+ * @extends TilesRendererBase
+ * @warn Left-handed coordinate systems are not currently supported.
+ */
 export class TilesRenderer extends TilesRendererBase {
 
+	/**
+	 * @param {string} url - URL of the root tileset JSON.
+	 * @param {Scene} scene - The Babylon.js scene to render tiles into.
+	 */
 	constructor( url, scene ) {
 
 		super( url );
 
+		/**
+		 * The Babylon.js scene tiles are rendered into.
+		 * @type {Scene}
+		 */
 		this.scene = scene;
+		/**
+		 * Root node that all loaded tile scenes are parented to.
+		 * @type {TransformNode}
+		 */
 		this.group = new TransformNode( 'tiles-root', scene );
+		/**
+		 * Whether to enable collision checking on loaded tile meshes.
+		 * @type {boolean}
+		 */
+		this.checkCollisions = false;
 		this._upRotationMatrix = Matrix.Identity();
 
 		// Babylon.js Observables for events
@@ -133,11 +161,11 @@ export class TilesRenderer extends TilesRendererBase {
 
 	}
 
-	async parseTile( buffer, tile, extension, uri, abortSignal ) {
+	async parseTile( buffer, tile, extension, url, abortSignal ) {
 
 		const engineData = tile.engineData;
 		const rootScene = this.scene;
-		const workingPath = LoaderUtils.getWorkingPath( uri );
+		const workingPath = LoaderUtils.getWorkingPath( url );
 		const fetchOptions = this.fetchOptions;
 
 		const tileTransform = engineData.transform;
@@ -155,7 +183,7 @@ export class TilesRenderer extends TilesRendererBase {
 				loader.fetchOptions = fetchOptions;
 				loader.adjustmentTransform.copyFrom( upRotationMatrix );
 
-				result = await loader.parse( buffer, uri );
+				result = await loader.parse( buffer, url );
 				break;
 
 			}
@@ -168,7 +196,7 @@ export class TilesRenderer extends TilesRendererBase {
 				loader.fetchOptions = fetchOptions;
 				loader.adjustmentTransform.copyFrom( upRotationMatrix );
 
-				result = await loader.parse( buffer, uri, extension );
+				result = await loader.parse( buffer, url, extension );
 				break;
 
 			}
@@ -192,6 +220,16 @@ export class TilesRenderer extends TilesRendererBase {
 
 			result.container.dispose();
 			return;
+
+		}
+
+		if ( this.checkCollisions ) {
+
+			for ( const mesh of scene.getChildMeshes() ) {
+
+				mesh.checkCollisions = true;
+
+			}
 
 		}
 
@@ -321,6 +359,10 @@ export class TilesRenderer extends TilesRendererBase {
 
 	}
 
+	/**
+	 * Disposes the renderer, releasing all loaded tile content and the root transform node.
+	 * @returns {void}
+	 */
 	dispose() {
 
 		super.dispose();

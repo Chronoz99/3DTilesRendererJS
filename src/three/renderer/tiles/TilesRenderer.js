@@ -1,3 +1,5 @@
+/** @import { Camera, WebGLRenderer, Box3, Sphere, Raycaster } from 'three' */
+/** @import { Ellipsoid } from '../math/Ellipsoid.js' */
 import { TilesRendererBase, LoaderUtils } from '3d-tiles-renderer/core';
 import { B3DMLoader } from '../loaders/B3DMLoader.js';
 import { PNTSLoader } from '../loaders/PNTSLoader.js';
@@ -8,20 +10,17 @@ import {
 	Matrix4,
 	Vector3,
 	Vector2,
-	Euler,
 	LoadingManager,
 	EventDispatcher,
 	Group,
 } from 'three';
-import { raycastTraverse, raycastTraverseFirstHit } from './raycastTraverse.js';
+import { raycastTraverse } from './raycastTraverse.js';
 import { TileBoundingVolume } from '../math/TileBoundingVolume.js';
 import { ExtendedFrustum } from '../math/ExtendedFrustum.js';
 import { estimateBytesUsed } from '../utils/MemoryUtils.js';
 import { WGS84_ELLIPSOID } from '../math/GeoConstants.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const _mat = /* @__PURE__ */ new Matrix4();
-const _euler = /* @__PURE__ */ new Euler();
 
 // In three.js r165 and higher raycast traversal can be ended early
 const INITIAL_FRUSTUM_CULLED = Symbol( 'INITIAL_FRUSTUM_CULLED' );
@@ -31,6 +30,8 @@ const tempVector2 = /* @__PURE__ */ new Vector2();
 
 const X_AXIS = /* @__PURE__ */ new Vector3( 1, 0, 0 );
 const Y_AXIS = /* @__PURE__ */ new Vector3( 0, 1, 0 );
+
+const tileToJSON = () => null;
 
 function updateFrustumCulled( object, toInitialValue ) {
 
@@ -42,8 +43,25 @@ function updateFrustumCulled( object, toInitialValue ) {
 
 }
 
+/**
+ * Three.js implementation of a 3D Tiles renderer. Extends `TilesRendererBase` with
+ * camera management, three.js scene integration, and GPU-accelerated tile loading.
+ * Add `tiles.group` to your scene and call `tiles.update()` each frame.
+ *
+ * Every object in a loaded tile's scene is stamped with a `userData.tile` back-reference to
+ * its owning tile, so a raycast hit, click target, or debug inspector can resolve the tile
+ * directly from any intersected object without walking the hierarchy or consulting the renderer.
+ * @extends TilesRendererBase
+ */
 export class TilesRenderer extends TilesRendererBase {
 
+	/**
+	 * If `true`, all tile meshes automatically have `frustumCulled` set to `false` since the
+	 * tiles renderer performs its own frustum culling. If `displayActiveTiles` is `true` or
+	 * multiple cameras are being used, consider setting this to `false`.
+	 * @type {boolean}
+	 * @default true
+	 */
 	get autoDisableRendererCulling() {
 
 		return this._autoDisableRendererCulling;
@@ -65,34 +83,54 @@ export class TilesRenderer extends TilesRendererBase {
 
 	}
 
-	get optimizeRaycast() {
-
-		return this._optimizeRaycast;
-
-	}
-
-	set optimizeRaycast( v ) {
-
-		console.warn( 'TilesRenderer: The "optimizeRaycast" option has been deprecated.' );
-		this._optimizeRaycast = v;
-
-	}
-
 	constructor( ...args ) {
 
 		super( ...args );
+
+		/**
+		 * Whether to use the bounding-volume hierarchy to accelerate raycasting. When disabled,
+		 * all active tile geometry is tested directly. Useful for tilesets with inaccurate
+		 * bounding volumes (e.g. Google Photorealistic Tiles) where traversal may miss
+		 * geometry between bounding volumes.
+		 * @type {boolean}
+		 * @default true
+		 */
+		this.accelerateRaycast = true;
+
+		/**
+		 * The container `Group` for the 3D tiles. Add this to the three.js scene. The group
+		 * also exposes a `matrixWorldInverse` field for transforming objects into the local
+		 * tileset frame.
+		 * @type {Group}
+		 */
 		this.group = new TilesGroup( this );
+
+		/**
+		 * The ellipsoid definition used for the tileset. May be overridden by the
+		 * `3DTILES_ellipsoid` extension. Specified in the local frame of `TilesRenderer.group`.
+		 * @type {Ellipsoid}
+		 * @default WGS84_ELLIPSOID
+		 */
 		this.ellipsoid = WGS84_ELLIPSOID.clone();
+
+		/**
+		 * Array of cameras registered with this renderer.
+		 * @type {Camera[]}
+		 */
 		this.cameras = [];
 		this.cameraMap = new Map();
 		this.cameraInfo = [];
-		this._optimizeRaycast = true;
 		this._upRotationMatrix = new Matrix4();
 		this._bytesUsed = new WeakMap();
 
 		// flag indicating whether frustum culling should be disabled
 		this._autoDisableRendererCulling = true;
 
+		/**
+		 * The `LoadingManager` used when loading tile geometry.
+		 * @type {LoadingManager}
+		 * @default new LoadingManager()
+		 */
 		this.manager = new LoadingManager();
 
 		// saved for event dispatcher functions
@@ -102,25 +140,11 @@ export class TilesRenderer extends TilesRendererBase {
 
 	addEventListener( type, listener ) {
 
-		if ( type === 'load-tile-set' ) {
-
-			console.warn( 'TilesRenderer: "load-tile-set" event has been deprecated. Use "load-tileset" instead.' );
-			type = 'load-tileset';
-
-		}
-
 		EventDispatcher.prototype.addEventListener.call( this, type, listener );
 
 	}
 
 	hasEventListener( type, listener ) {
-
-		if ( type === 'load-tile-set' ) {
-
-			console.warn( 'TilesRenderer: "load-tile-set" event has been deprecated. Use "load-tileset" instead.' );
-			type = 'load-tileset';
-
-		}
 
 		return EventDispatcher.prototype.hasEventListener.call( this, type, listener );
 
@@ -128,39 +152,23 @@ export class TilesRenderer extends TilesRendererBase {
 
 	removeEventListener( type, listener ) {
 
-		if ( type === 'load-tile-set' ) {
-
-			console.warn( 'TilesRenderer: "load-tile-set" event has been deprecated. Use "load-tileset" instead.' );
-			type = 'load-tileset';
-
-		}
-
 		EventDispatcher.prototype.removeEventListener.call( this, type, listener );
 
 	}
 
 	dispatchEvent( e ) {
 
-		if ( 'tileset' in e ) {
-
-			Object.defineProperty( e, 'tileSet', {
-				get() {
-
-					console.warn( 'TilesRenderer: "event.tileSet" has been deprecated. Use "event.tileset" instead.' );
-					return e.tileset;
-
-				},
-				enumerable: false,
-				configurable: true,
-			} );
-
-		}
-
 		EventDispatcher.prototype.dispatchEvent.call( this, e );
 
 	}
 
 	/* Public API */
+
+	/**
+	 * Returns the axis-aligned bounding box of the root tile in the group's local space.
+	 * @param {Box3} target - Target box to write into.
+	 * @returns {boolean} Whether the tileset is loaded and a bounding box is available.
+	 */
 	getBoundingBox( target ) {
 
 		if ( ! this.root ) {
@@ -183,6 +191,12 @@ export class TilesRenderer extends TilesRendererBase {
 
 	}
 
+	/**
+	 * Returns the oriented bounding box and transform of the root tile.
+	 * @param {Box3} targetBox - Target box to write into (in local OBB space).
+	 * @param {Matrix4} targetMatrix - Transform from OBB local space to group local space.
+	 * @returns {boolean} Whether the tileset is loaded and an OBB is available.
+	 */
 	getOrientedBoundingBox( targetBox, targetMatrix ) {
 
 		if ( ! this.root ) {
@@ -205,6 +219,11 @@ export class TilesRenderer extends TilesRendererBase {
 
 	}
 
+	/**
+	 * Returns the bounding sphere of the root tile in the group's local space.
+	 * @param {Sphere} target - Target sphere to write into.
+	 * @returns {boolean} Whether the tileset is loaded and a bounding sphere is available.
+	 */
 	getBoundingSphere( target ) {
 
 		if ( ! this.root ) {
@@ -227,6 +246,10 @@ export class TilesRenderer extends TilesRendererBase {
 
 	}
 
+	/**
+	 * Iterates over all currently loaded tile scenes.
+	 * @param {Function} callback - Called with `( scene: Object3D, tile: object )` for each loaded tile.
+	 */
 	forEachLoadedModel( callback ) {
 
 		this.traverse( tile => {
@@ -242,6 +265,12 @@ export class TilesRenderer extends TilesRendererBase {
 
 	}
 
+	/**
+	 * Performs a raycast against all loaded tile scenes. Compatible with Three.js raycasting.
+	 * Supports `raycaster.firstHitOnly` for early termination.
+	 * @param {Raycaster} raycaster
+	 * @param {Array} intersects - Array to push intersection results into.
+	 */
 	raycast( raycaster, intersects ) {
 
 		if ( ! this.root ) {
@@ -250,29 +279,56 @@ export class TilesRenderer extends TilesRendererBase {
 
 		}
 
-		if ( raycaster.firstHitOnly ) {
+		if ( this.accelerateRaycast ) {
 
-			const hit = raycastTraverseFirstHit( this, this.root, raycaster );
-			if ( hit ) {
-
-				intersects.push( hit );
-
-			}
+			raycastTraverse( this, this.root, raycaster, intersects );
 
 		} else {
 
-			raycastTraverse( this, this.root, raycaster, intersects );
+			const hits = raycaster.firstHitOnly ? [] : intersects;
+			for ( const tile of this.activeTiles ) {
+
+				const { scene } = tile.engineData;
+				if ( ! this.invokeOnePlugin( plugin => {
+
+					return plugin.raycastTile && plugin.raycastTile( tile, scene, raycaster, hits );
+
+				} ) ) {
+
+					raycaster.intersectObject( scene, true, hits );
+
+				}
+
+			}
+
+			if ( raycaster.firstHitOnly && hits.length > 0 ) {
+
+				hits.sort( ( a, b ) => a.distance - b.distance );
+				intersects.push( hits[ 0 ] );
+
+			}
 
 		}
 
 	}
 
+	/**
+	 * Returns whether the given camera is registered with this renderer.
+	 * @param {Camera} camera
+	 * @returns {boolean}
+	 */
 	hasCamera( camera ) {
 
 		return this.cameraMap.has( camera );
 
 	}
 
+	/**
+	 * Registers a camera with the renderer so it is used for tile selection and screen-space error
+	 * calculation. Use `setResolution` or `setResolutionFromRenderer` to provide the camera's resolution.
+	 * @param {Camera} camera
+	 * @returns {boolean} Whether the camera was newly added.
+	 */
 	setCamera( camera ) {
 
 		const cameras = this.cameras;
@@ -291,6 +347,13 @@ export class TilesRenderer extends TilesRendererBase {
 
 	}
 
+	/**
+	 * Sets the render resolution for a registered camera, used for screen-space error calculation.
+	 * @param {Camera} camera - A previously registered camera.
+	 * @param {number|Vector2} xOrVec - Render width in pixels, or a Vector2 containing width and height.
+	 * @param {number} [y] - Render height in pixels when `xOrVec` is a number.
+	 * @returns {boolean} Whether the camera is registered and the resolution was updated.
+	 */
 	setResolution( camera, xOrVec, y ) {
 
 		const cameraMap = this.cameraMap;
@@ -315,6 +378,27 @@ export class TilesRenderer extends TilesRendererBase {
 
 	}
 
+	/**
+	 * Returns the render resolution previously set for a registered camera.
+	 * @param {Camera} camera - A previously registered camera.
+	 * @param {Vector2} target - Vector2 to write the result into.
+	 * @returns {Vector2|null} The target with width/height filled in, or null if the camera is not registered.
+	 */
+	getResolution( camera, target ) {
+
+		const vec = this.cameraMap.get( camera );
+		if ( ! vec ) return null;
+
+		return target.copy( vec );
+
+	}
+
+	/**
+	 * Sets the render resolution for a camera by reading the current size from a WebGLRenderer.
+	 * @param {Camera} camera - A previously registered camera.
+	 * @param {WebGLRenderer} renderer
+	 * @returns {boolean} Whether the camera is registered and the resolution was updated.
+	 */
 	setResolutionFromRenderer( camera, renderer ) {
 
 		renderer.getSize( tempVector2 );
@@ -323,6 +407,11 @@ export class TilesRenderer extends TilesRendererBase {
 
 	}
 
+	/**
+	 * Unregisters a camera from the renderer.
+	 * @param {Camera} camera
+	 * @returns {boolean} Whether the camera was found and removed.
+	 */
 	deleteCamera( camera ) {
 
 		const cameras = this.cameras;
@@ -466,7 +555,7 @@ export class TilesRenderer extends TilesRendererBase {
 			tempMat.premultiply( camera.matrixWorldInverse );
 			tempMat.premultiply( camera.projectionMatrix );
 
-			frustum.setFromProjectionMatrix( tempMat );
+			frustum.setFromProjectionMatrix( tempMat, camera.coordinateSystem, camera.reversedDepth );
 
 			// get transform position in group root frame
 			position.set( 0, 0, 0 );
@@ -547,12 +636,15 @@ export class TilesRenderer extends TilesRendererBase {
 		tile.engineData.materials = null;
 		tile.engineData.textures = null;
 
+		// Set "toJSON" to return "null" to avoid cyclic references
+		tile.toJSON = tileToJSON;
+
 	}
 
-	async parseTile( buffer, tile, extension, uri, abortSignal ) {
+	async parseTile( buffer, tile, extension, url, abortSignal ) {
 
 		const engineData = tile.engineData;
-		const workingPath = LoaderUtils.getWorkingPath( uri );
+		const workingPath = LoaderUtils.getWorkingPath( url );
 		const fetchOptions = this.fetchOptions;
 
 		const manager = this.manager;
@@ -663,7 +755,7 @@ export class TilesRenderer extends TilesRendererBase {
 
 			default: {
 
-				promise = this.invokeOnePlugin( plugin => plugin.parseToMesh && plugin.parseToMesh( buffer, tile, extension, uri, abortSignal ) );
+				promise = this.invokeOnePlugin( plugin => plugin.parseToMesh && plugin.parseToMesh( buffer, tile, extension, url, abortSignal ) );
 				break;
 
 			}
@@ -705,10 +797,12 @@ export class TilesRenderer extends TilesRendererBase {
 
 		} );
 
-		// frustum culling
+		// record the initial frustum-culled state and stamp the owning tile onto every object so
+		// raycast hits, click handling, and debug tooling can resolve back to the tile
 		scene.traverse( c => {
 
 			c[ INITIAL_FRUSTUM_CULLED ] = c.frustumCulled;
+			c.userData.tile = tile;
 
 		} );
 		updateFrustumCulled( scene, ! this.autoDisableRendererCulling );
@@ -852,25 +946,54 @@ export class TilesRenderer extends TilesRendererBase {
 
 	}
 
-	setTileVisible( tile, visible ) {
+	setTileActive( tile, active ) {
+
+		super.setTileActive( tile, active );
 
 		const scene = tile.engineData.scene;
-		const group = this.group;
+		if ( scene ) {
 
-		if ( visible ) {
+			// an active scene is parented to the group so its world matrix is included for raycasting
+			// or other spatial queries while active. A tile is never visible while inactive, so an
+			// inactive scene is always fully detached.
+			if ( active ) {
 
-			if ( scene ) {
-
-				group.add( scene );
+				scene.parent = this.group;
 				scene.updateMatrixWorld( true );
+
+			} else {
+
+				scene.parent = null;
 
 			}
 
-		} else {
+		}
 
-			if ( scene ) {
+	}
+
+	setTileVisible( tile, visible ) {
+
+		const scene = tile.engineData.scene;
+		const { activeTiles, group } = this;
+
+		if ( scene ) {
+
+			if ( visible ) {
+
+				group.add( scene );
+
+			} else {
 
 				group.remove( scene );
+
+				// group.remove clears the parent, but the tile may still be active, and an active scene
+				// must keep the group as a parent (without being a child) so its world matrix still
+				// resolves for raycasting. A tile is never visible while inactive.
+				if ( activeTiles.has( tile ) ) {
+
+					scene.parent = group;
+
+				}
 
 			}
 
@@ -959,29 +1082,6 @@ export class TilesRenderer extends TilesRendererBase {
 			target.distanceFromCamera = minCameraDistance;
 
 		}
-
-	}
-
-	// adjust the rotation of the group such that Y is altitude, X is North, and Z is East
-	setLatLonToYUp( lat, lon ) {
-
-		console.warn( 'TilesRenderer: setLatLonToYUp is deprecated. Use the ReorientationPlugin, instead.' );
-
-		const { ellipsoid, group } = this;
-
-		_euler.set( Math.PI / 2, Math.PI / 2, 0 );
-		_mat.makeRotationFromEuler( _euler );
-
-		ellipsoid.getEastNorthUpFrame( lat, lon, 0, group.matrix )
-			.multiply( _mat )
-			.invert()
-			.decompose(
-				group.position,
-				group.quaternion,
-				group.scale,
-			);
-
-		group.updateMatrixWorld( true );
 
 	}
 

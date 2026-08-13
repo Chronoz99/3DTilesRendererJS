@@ -6,14 +6,14 @@ import { TilesPlugin, TilesRenderer, TilesAttributionOverlay, EnvironmentControl
 import { CesiumIonAuthPlugin, UpdateOnChangePlugin, GLTFExtensionsPlugin, ReorientationPlugin } from '3d-tiles-renderer/plugins';
 
 // Plugins
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 // R3F, DREI and LEVA imports
 import { Canvas } from '@react-three/fiber';
 import { Environment, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import { useControls } from 'leva';
 
-const dracoLoader = new DRACOLoader().setDecoderPath( 'https://www.gstatic.com/draco/v1/decoders/' );
+const dracoLoader = new DRACOLoader();
 
 function App() {
 

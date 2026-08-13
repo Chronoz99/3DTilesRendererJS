@@ -1,11 +1,30 @@
 import { getUrlExtension } from '../utilities/urlExtension.js';
 import { LRUCache } from '../utilities/LRUCache.js';
 import { PriorityQueue } from '../utilities/PriorityQueue.js';
-import { runTraversal as optimizedRunTraversal } from './optimizedTraverseFunctions.js';
 import { runTraversal } from './traverseFunctions.js';
 import { UNLOADED, QUEUED, LOADING, PARSING, LOADED, FAILED } from '../constants.js';
 import { throttle } from '../utilities/throttle.js';
 import { traverseSet } from '../utilities/TraversalUtils.js';
+
+/**
+ * @callback TileBeforeCallback
+ * @param {Tile} tile
+ * @param {Tile|null} parent
+ * @param {number} depth
+ * @returns {boolean}
+ */
+
+/**
+ * @callback TileAfterCallback
+ * @param {Tile} tile
+ * @param {Tile|null} parent
+ * @param {number} depth
+ */
+
+/**
+ * @callback EventCallback
+ * @param {Object} event
+ */
 
 const PLUGIN_REGISTERED = Symbol( 'PLUGIN_REGISTERED' );
 const regionErrorTarget = {
@@ -14,9 +33,11 @@ const regionErrorTarget = {
 	distance: Infinity,
 };
 
-// priority queue sort function that takes two tiles to compare. Returning 1 means
-// "tile a" is loaded first.
-const defaultPriorityCallback = ( a, b ) => {
+// Priority callbacks for the download and parse queues. Returning 1 means "tile a" is loaded first.
+// Differences between the two:
+//   errorPriorityCallback:    sorts by error (high → low), then distance. Used when loadAncestors is enabled.
+//   distancePriorityCallback: sorts by inFrustum, hasUnrenderableContent, then distance. No error sort.
+const errorPriorityCallback = ( a, b ) => {
 
 	const aPriority = a.priority || 0;
 	const bPriority = b.priority || 0;
@@ -56,22 +77,9 @@ const defaultPriorityCallback = ( a, b ) => {
 
 };
 
-// Optimized priority callback - prioritizes distance over error for better user experience
-const optimizedPriorityCallback = ( a, b ) => {
+const distancePriorityCallback = ( a, b ) => {
 
-	const aPriority = a.priority || 0;
-	const bPriority = b.priority || 0;
-
-	if ( aPriority !== bPriority ) {
-
-		// lower priority value sorts first
-		return aPriority > bPriority ? 1 : - 1;
-
-	} else if ( ! a.traversal || ! b.traversal ) {
-
-		return 0;
-
-	} else if ( a.traversal.used !== b.traversal.used ) {
+	if ( a.traversal.used !== b.traversal.used ) {
 
 		// load tiles that have been used
 		return a.traversal.used ? 1 : - 1;
@@ -91,6 +99,11 @@ const optimizedPriorityCallback = ( a, b ) => {
 		// load closer tiles first
 		return a.traversal.distanceFromCamera > b.traversal.distanceFromCamera ? - 1 : 1;
 
+	} else if ( a.internal.depthFromRenderedParent !== b.internal.depthFromRenderedParent ) {
+
+		// when distance is equal (e.g. camera inside bounds), load shallower tiles first
+		return a.internal.depthFromRenderedParent > b.internal.depthFromRenderedParent ? - 1 : 1;
+
 	}
 
 	return 0;
@@ -101,19 +114,7 @@ const optimizedPriorityCallback = ( a, b ) => {
 // is unloaded first.
 const lruPriorityCallback = ( a, b ) => {
 
-	const aPriority = a.priority || 0;
-	const bPriority = b.priority || 0;
-
-	if ( aPriority !== bPriority ) {
-
-		// lower priority value sorts first
-		return aPriority > bPriority ? 1 : - 1;
-
-	} else if ( ! a.traversal || ! b.traversal ) {
-
-		return 0;
-
-	} else if ( a.traversal.lastFrameVisited !== b.traversal.lastFrameVisited ) {
+	if ( a.traversal.lastFrameVisited !== b.traversal.lastFrameVisited ) {
 
 		// dispose of least recent tiles first
 		return a.traversal.lastFrameVisited > b.traversal.lastFrameVisited ? - 1 : 1;
@@ -144,8 +145,238 @@ const lruPriorityCallback = ( a, b ) => {
 
 };
 
+// Unified priority callback for shared queues — delegates to the appropriate per-tile callback
+// based on each tile's renderer settings. Falls back to errorPriorityCallback for cross-renderer
+// comparisons or when renderer settings differ.
+export const unifiedPriorityCallback = ( a, b ) => {
+
+	// handle non-tile cases
+	const aPriority = a.priority ?? Infinity;
+	const bPriority = b.priority ?? Infinity;
+
+	if ( aPriority !== bPriority ) {
+
+		// lower priority value sorts first
+		return aPriority > bPriority ? 1 : - 1;
+
+	} else if ( ! a.internal || ! b.internal ) {
+
+		return 0;
+
+	}
+
+	const aRenderer = a.internal.renderer;
+	const bRenderer = b.internal.renderer;
+
+	const aOptimized = ! aRenderer.loadAncestors;
+	const bOptimized = ! bRenderer.loadAncestors;
+
+	if ( aOptimized && bOptimized ) {
+
+		return distancePriorityCallback( a, b );
+
+	} else {
+
+		return errorPriorityCallback( a, b );
+
+	}
+
+};
+
+// Internal Tile Type Definitions
+
+/**
+ * Internal renderer state added to each tile during preprocessing.
+ * @typedef {Object} TileInternalData
+ * @property {boolean} hasContent - Whether the tile has a content URI.
+ * @property {boolean} hasRenderableContent - Whether the tile content is a renderable model (not an external tileset).
+ * @property {boolean} hasUnrenderableContent - Whether the tile content is an external tileset JSON.
+ * @property {number} loadingState - Current loading state constant (UNLOADED, QUEUED, LOADING, PARSING, LOADED, or FAILED).
+ * @property {string} basePath - Base URL used to resolve relative content URIs.
+ * @property {number} depth - Depth of this tile in the full tile hierarchy.
+ * @property {number} depthFromRenderedParent - Depth from the nearest ancestor with renderable content.
+ * @property {boolean} isVirtual - Whether this tile was synthetically generated by a plugin.
+ * @property {number} virtualChildCount - Number of virtual children appended to this tile by plugins.
+ * @property {TilesRendererBase} renderer - The renderer instance that owns this tile.
+ */
+
+/**
+ * Per-frame traversal state updated on each tile during `TilesRendererBase.update`.
+ * @typedef {Object} TileTraversalData
+ * @property {number} distanceFromCamera - Distance from the tile bounds to the nearest active camera.
+ * @property {number} error - Screen space error computed for this tile.
+ * @property {boolean} inFrustum - Whether the tile was within the camera frustum on the last update.
+ * @property {boolean} isLeaf - Whether this tile is a leaf node in the used tile tree.
+ * @property {boolean} used - Whether this tile was visited during the last update traversal.
+ * @property {boolean} usedLastFrame - Whether this tile was visited in the previous frame.
+ * @property {boolean} visible - Whether this tile is currently visible (loaded, in frustum, meets SSE).
+ */
+
+/**
+ * A 3D Tiles tile with both spec fields (from tileset JSON) and renderer-managed state.
+ * @typedef {Object} Tile
+ * @property {Object} boundingVolume - Bounding volume. Has either a `box` (12-element array) or `sphere` (4-element array) field.
+ * @property {number} geometricError - Error in meters introduced if this tile is not rendered.
+ * @property {Tile|null} parent - Parent tile, or null for the root.
+ * @property {Tile[]} [children] - Child tiles.
+ * @property {Object} [content] - Loadable content URI reference.
+ * @property {'REPLACE'|'ADD'} [refine] - Refinement strategy; inherited from the parent if omitted.
+ * @property {number[]} [transform] - Optional 4x4 column-major transform matrix.
+ * @property {Object} [extensions] - Extension-specific objects.
+ * @property {Object} [extras] - Extra application-specific data.
+ * @property {TileInternalData} internal - Internal renderer state.
+ * @property {TileTraversalData} traversal - Per-frame traversal state.
+ */
+
+/**
+ * A loaded 3D Tiles tileset JSON object.
+ * @typedef {Object} Tileset
+ * @property {Object} asset - Metadata about the tileset. Contains `version` (string) and optional `tilesetVersion` (string).
+ * @property {number} geometricError - Error in meters for the entire tileset.
+ * @property {Tile} root - The root tile.
+ * @property {string[]} [extensionsUsed] - Names of extensions used somewhere in the tileset.
+ * @property {string[]} [extensionsRequired] - Names of extensions required to load the tileset.
+ * @property {Object} [properties] - Metadata about per-feature properties.
+ * @property {Object} [extensions] - Extension-specific objects.
+ * @property {Object} [extras] - Extra application-specific data.
+ */
+
+//
+
+// TilesRendererBase Event Definitions
+
+/**
+ * Fired when the renderer determines a new render is required — e.g. after a tile loads.
+ * @event TilesRendererBase#needs-update
+ */
+
+/**
+ * Fired when any tileset JSON finishes loading.
+ * @event TilesRendererBase#load-tileset
+ * @property {Tileset} tileset - The loaded tileset object.
+ * @property {string} url - The URL from which the tileset was loaded.
+ */
+
+/**
+ * Fired when the root tileset JSON finishes loading.
+ * @event TilesRendererBase#load-root-tileset
+ * @property {Tileset} tileset - The loaded root tileset object.
+ * @property {string} url - The URL from which the tileset was loaded.
+ */
+
+/**
+ * Fired when tile downloads begin after a period of inactivity.
+ * @event TilesRendererBase#tiles-load-start
+ */
+
+/**
+ * Fired when all pending tile downloads and parses have completed.
+ * @event TilesRendererBase#tiles-load-end
+ */
+
+/**
+ * Fired when a tile content download begins.
+ * @event TilesRendererBase#tile-download-start
+ * @property {Tile} tile - The tile being downloaded.
+ * @property {string} url - The URL being fetched.
+ */
+
+/**
+ * Fired when a tile's renderable content (model/scene) is created.
+ * The `scene` type is engine-specific (e.g. `THREE.Group` in three.js).
+ * @event TilesRendererBase#load-model
+ * @property {Object} scene - The engine-specific scene object created for this tile.
+ * @property {Tile} tile - The tile the scene belongs to.
+ * @property {string} url - The URL the content was loaded from.
+ */
+
+/**
+ * Fired when a tile's renderable content is about to be removed and destroyed.
+ * The `scene` type is engine-specific (e.g. `THREE.Group` in three.js).
+ * @event TilesRendererBase#dispose-model
+ * @property {Object} scene - The engine-specific scene object being disposed.
+ * @property {Tile} tile - The tile the scene belonged to.
+ */
+
+/**
+ * Fired when a tile transitions between visible and hidden.
+ * The `scene` type is engine-specific (e.g. `THREE.Group` in three.js).
+ * @event TilesRendererBase#tile-visibility-change
+ * @property {Object} scene - The engine-specific scene object.
+ * @property {Tile} tile - The tile whose visibility changed.
+ * @property {boolean} visible - Whether the tile is now visible.
+ */
+
+/**
+ * Fired at the start of each `update()` call, before traversal begins.
+ * @event TilesRendererBase#update-before
+ */
+
+/**
+ * Fired at the end of each `update()` call, after traversal completes.
+ * @event TilesRendererBase#update-after
+ */
+
+/**
+ * Fired when a tile or tileset fails to load.
+ * @event TilesRendererBase#load-error
+ * @property {Tile|null} tile - The tile that failed, or null if a root tileset failed.
+ * @property {Error} error - The error that occurred.
+ * @property {string|URL} url - The URL that failed to load.
+ */
+
+// Default shared caches and queues
+export const DEFAULT_LRU_CACHE = new LRUCache();
+DEFAULT_LRU_CACHE.unloadPriorityCallback = lruPriorityCallback;
+
+export const DEFAULT_DOWNLOAD_QUEUE = new PriorityQueue();
+DEFAULT_DOWNLOAD_QUEUE.maxJobs = 25;
+DEFAULT_DOWNLOAD_QUEUE.priorityCallback = unifiedPriorityCallback;
+
+export const DEFAULT_PARSE_QUEUE = new PriorityQueue();
+DEFAULT_PARSE_QUEUE.maxJobs = 5;
+DEFAULT_PARSE_QUEUE.priorityCallback = unifiedPriorityCallback;
+
+export const DEFAULT_NODE_QUEUE = new PriorityQueue();
+DEFAULT_NODE_QUEUE.maxJobs = 25;
+DEFAULT_NODE_QUEUE.priorityCallback = ( a, b ) => {
+
+	const aParent = a.parent;
+	const bParent = b.parent;
+	if ( aParent === bParent ) {
+
+		return 0;
+
+	} else if ( ! aParent ) {
+
+		return 1;
+
+	} else if ( ! bParent ) {
+
+		return - 1;
+
+	} else {
+
+		// fall back to the priority used for tile loads and parsing
+		return unifiedPriorityCallback( aParent, bParent );
+
+	}
+
+};
+
+
+/**
+ * Base class for 3D Tiles renderers. Manages tile loading, caching, traversal,
+ * and a plugin system for extending rendering behavior. Engine-specific renderers
+ * extend this class to add camera projection, scene management, and tile display.
+ */
 export class TilesRendererBase {
 
+	/**
+	 * Root tile of the loaded root tileset, or null if not yet loaded.
+	 * @type {Tile|null}
+	 * @readonly
+	 */
 	get root() {
 
 		const tileset = this.rootTileset;
@@ -153,13 +384,11 @@ export class TilesRendererBase {
 
 	}
 
-	get rootTileSet() {
-
-		console.warn( 'TilesRenderer: "rootTileSet" has been deprecated. Use "rootTileset" instead.' );
-		return this.rootTileset;
-
-	}
-
+	/**
+	 * Fraction of tiles loaded since the last idle state, from 0 (nothing loaded) to 1 (all loaded).
+	 * @type {number}
+	 * @readonly
+	 */
 	get loadProgress() {
 
 		const { stats, isLoading } = this;
@@ -169,79 +398,100 @@ export class TilesRendererBase {
 
 	}
 
-	get errorThreshold() {
-
-		return this._errorThreshold;
-
-	}
-
-	set errorThreshold( v ) {
-
-		console.warn( 'TilesRenderer: The "errorThreshold" option has been deprecated.' );
-		this._errorThreshold = v;
-
-	}
-
+	/**
+	 * @param {string} [url] - URL of the root tileset JSON to load.
+	 * @param {object|null} [cachedRootJson] - Pre-fetched root tileset JSON to use instead of fetching the root URL.
+	 */
 	constructor( url = null, cachedRootJson = null ) {
 
 		// state
 		this.rootLoadingState = UNLOADED;
+
+		/**
+		 * The loaded root tileset object, or null if not yet loaded.
+		 * @type {Tileset|null}
+		 * @readonly
+		 */
 		this.rootTileset = null;
 		this.rootURL = url;
+
+		/**
+		 * Pre-fetched root tileset JSON, or null to load the root URL normally.
+		 * @type {object|null}
+		 */
 		this.cachedRootJson = cachedRootJson;
+
+		/**
+		 * Options passed to `fetch` when loading tile and tileset resources.
+		 * @type {RequestInit}
+		 * @default {}
+		 */
 		this.fetchOptions = {};
 		this.plugins = [];
 		this.queuedTiles = [];
 		this.cachedSinceLoadComplete = new Set();
 		this.isLoading = false;
 
-		const lruCache = new LRUCache();
-		lruCache.unloadPriorityCallback = lruPriorityCallback;
-
-		const downloadQueue = new PriorityQueue();
-		downloadQueue.maxJobs = 25;
-		downloadQueue.priorityCallback = defaultPriorityCallback;
-
-		const parseQueue = new PriorityQueue();
-		parseQueue.maxJobs = 5;
-		parseQueue.priorityCallback = defaultPriorityCallback;
-
-		const processNodeQueue = new PriorityQueue();
-		processNodeQueue.maxJobs = 25;
-		processNodeQueue.priorityCallback = ( a, b ) => {
-
-			const aParent = a.parent;
-			const bParent = b.parent;
-			if ( aParent === bParent ) {
-
-				return 0;
-
-			} else if ( ! aParent ) {
-
-				return 1;
-
-			} else if ( ! bParent ) {
-
-				return - 1;
-
-			} else {
-
-				// fall back to the priority used for tile loads and parsing
-				return downloadQueue.priorityCallback( aParent, bParent );
-
-			}
-
-		};
-
 		this.processedTiles = new WeakSet();
+
+		/**
+		 * Set of all tiles that are currently visible.
+		 * @type {Set<Tile>}
+		 * @readonly
+		 */
 		this.visibleTiles = new Set();
+
+		/**
+		 * Set of all tiles that are currently active (displayed as a stand-in while children load).
+		 * @type {Set<Tile>}
+		 * @readonly
+		 */
 		this.activeTiles = new Set();
 		this.usedSet = new Set();
 		this.loadingTiles = new Set();
-		this.lruCache = lruCache;
-		this.downloadQueue = downloadQueue;
-		this.parseQueue = parseQueue;
-		this.processNodeQueue = processNodeQueue;
+
+		/**
+		 * LRU cache managing loaded tile lifecycle and memory eviction.
+		 * @note Cannot be replaced once `update()` has been called for the first time.
+		 * @type {LRUCache}
+		 */
+		this.lruCache = DEFAULT_LRU_CACHE;
+
+		/**
+		 * Priority queue controlling concurrent tile downloads. Max jobs defaults to `25`.
+		 * @note Cannot be replaced once `update()` has been called for the first time.
+		 * @type {PriorityQueue}
+		 */
+		this.downloadQueue = DEFAULT_DOWNLOAD_QUEUE;
+
+		/**
+		 * Priority queue controlling concurrent tile parsing. Max jobs defaults to `5`.
+		 * @note Cannot be modified once `update()` has been called for the first time.
+		 * @type {PriorityQueue}
+		 */
+		this.parseQueue = DEFAULT_PARSE_QUEUE;
+
+		/**
+		 * Priority queue for expanding and initializing tiles for traversal. Max jobs defaults to `25`.
+		 * @note Cannot be replaced once `update()` has been called for the first time.
+		 * @type {PriorityQueue}
+		 */
+		this.processNodeQueue = DEFAULT_NODE_QUEUE;
+
+		/**
+		 * Loading and rendering statistics updated each frame. Fields:
+		 * - `inCache` — tiles currently in the LRU cache
+		 * - `queued` — tiles queued for download
+		 * - `downloading` — tiles currently downloading
+		 * - `parsing` — tiles currently being parsed
+		 * - `loaded` — tiles that have finished loading
+		 * - `failed` — tiles that failed to load
+		 * - `inFrustum` — tiles inside the camera frustum after the last update
+		 * - `used` — tiles visited during the last traversal
+		 * - `active` — tiles currently set as active
+		 * - `visible` — tiles currently visible
+		 * @type {Object}
+		 */
 		this.stats = {
 			inCacheSinceLoad: 0,
 			inCache: 0,
@@ -269,37 +519,80 @@ export class TilesRendererBase {
 		} );
 
 		// options
+
+		/**
+		 * Target screen-space error in pixels to aim for when updating the geometry. Tiles will
+		 * not render if they are below this level of screen-space error. See the
+		 * {@link https://github.com/CesiumGS/3d-tiles/tree/master/specification#geometric-error geometric error section}
+		 * of the 3D Tiles specification for more information.
+		 * @type {number}
+		 * @default 16
+		 */
 		this.errorTarget = 16.0;
-		this._errorThreshold = Infinity;
+
+		/**
+		 * "Active tiles" are those that are loaded and available but not necessarily visible.
+		 * These tiles are useful for raycasting off-camera or for casting shadows. Active tiles
+		 * not currently in a camera frustum are removed from the scene as an optimization.
+		 * Setting this to `true` keeps them in the scene so they can be rendered from an outside
+		 * camera view not accounted for by the tiles renderer.
+		 * @type {boolean}
+		 * @default false
+		 */
 		this.displayActiveTiles = false;
+
+		/**
+		 * Maximum depth in the tile hierarchy to traverse. Tiles deeper than this are skipped.
+		 * @type {number}
+		 * @default Infinity
+		 */
 		this.maxDepth = Infinity;
-		this.optimizedLoadStrategy = false;
+
+		/**
+		 * **Experimental.** When `true`, sibling tiles are loaded together to prevent gaps during
+		 * camera movement. When `false`, only visible tiles are loaded, minimizing memory but
+		 * potentially causing brief gaps during rapid movement. Implicitly treated as `true` when
+		 * `loadAncestors` is enabled.
+		 * @type {boolean}
+		 * @default true
+		 */
 		this.loadSiblings = true;
+
+		/**
+		 * **Experimental.** When `true`, ancestor tiles are queued for download and displayed as a
+		 * fallback while children are loading — similar to the behavior of the standard load
+		 * strategy. Increases memory usage but provides smoother transitions on first load.
+		 * Implicitly enables sibling loading to prevent flickering during camera movement.
+		 * @type {boolean}
+		 * @default true
+		 */
+		this.loadAncestors = true;
+
+		/**
+		 * The number of tiles to process immediately when traversing the tile set to determine
+		 * what to render. Lower numbers prevent frame hiccups caused by processing too many tiles
+		 * at once when a new tile set is available, while higher values process more tiles
+		 * immediately so data can be downloaded and displayed sooner.
+		 * @type {number}
+		 * @default 250
+		 */
 		this.maxTilesProcessed = 250;
 
 	}
 
 	// Plugins
+
+	/**
+	 * Registers a plugin with this renderer. Plugins are inserted in priority order and
+	 * receive lifecycle callbacks throughout the tile loading and rendering process.
+	 * A plugin instance may only be registered to one renderer at a time.
+	 * @param {Object} plugin
+	 */
 	registerPlugin( plugin ) {
 
 		if ( plugin[ PLUGIN_REGISTERED ] === true ) {
 
 			throw new Error( 'TilesRendererBase: A plugin can only be registered to a single tileset' );
-
-		}
-
-		// warn if plugin implements deprecated loadRootTileSet method
-		if ( plugin.loadRootTileSet && ! plugin.loadRootTileset ) {
-
-			console.warn( 'TilesRendererBase: Plugin implements deprecated "loadRootTileSet" method. Please rename to "loadRootTileset".' );
-			plugin.loadRootTileset = plugin.loadRootTileSet;
-
-		}
-
-		if ( plugin.preprocessTileSet && ! plugin.preprocessTileset ) {
-
-			console.warn( 'TilesRendererBase: Plugin implements deprecated "preprocessTileSet" method. Please rename to "preprocessTileset".' );
-			plugin.preprocessTileset = plugin.preprocessTileSet;
 
 		}
 
@@ -329,6 +622,13 @@ export class TilesRendererBase {
 
 	}
 
+	/**
+	 * Removes a registered plugin. Calls `plugin.dispose()` if defined.
+	 * Accepts either the plugin instance or its string name.
+	 * Returns true if the plugin was found and removed.
+	 * @param {Object|string} plugin
+	 * @returns {boolean}
+	 */
 	unregisterPlugin( plugin ) {
 
 		const plugins = this.plugins;
@@ -356,6 +656,11 @@ export class TilesRendererBase {
 
 	}
 
+	/**
+	 * Returns the first registered plugin whose `name` property matches, or null.
+	 * @param {string} name
+	 * @returns {Object|null}
+	 */
 	getPluginByName( name ) {
 
 		return this.plugins.find( p => p.name === name ) || null;
@@ -400,6 +705,14 @@ export class TilesRendererBase {
 	}
 
 	// Public API
+
+	/**
+	 * Iterates over all tiles in the loaded hierarchy. `beforecb` is called before
+	 * descending into a tile's children; returning true from it skips the subtree.
+	 * `aftercb` is called after all children have been visited.
+	 * @param {TileBeforeCallback|null} [beforecb]
+	 * @param {TileAfterCallback|null} [aftercb]
+	 */
 	traverse( beforecb, aftercb, ensureFullyProcessed = true ) {
 
 		if ( ! this.root ) return;
@@ -418,6 +731,11 @@ export class TilesRendererBase {
 
 	}
 
+	/**
+	 * Collects attribution data from all registered plugins into `target` and returns it.
+	 * @param {Array<{type: string, value: any}>} [target]
+	 * @returns {Array<{type: string, value: any}>}
+	 */
 	getAttributions( target = [] ) {
 
 		this.invokeAllPlugins( plugin => plugin !== this && plugin.getAttributions && plugin.getAttributions( target ) );
@@ -425,10 +743,15 @@ export class TilesRendererBase {
 
 	}
 
+	/**
+	 * Runs the tile traversal and update loop. Should be called once per frame after
+	 * camera matrices have been updated. Triggers tile loading, visibility updates,
+	 * and LRU cache eviction.
+	 */
 	update() {
 
 		// load root
-		const { lruCache, usedSet, stats, root, downloadQueue, parseQueue, processNodeQueue, optimizedLoadStrategy } = this;
+		const { lruCache, usedSet, stats, root, downloadQueue, parseQueue, processNodeQueue } = this;
 		if ( this.rootLoadingState === UNLOADED ) {
 
 			this.rootLoadingState = LOADING;
@@ -445,7 +768,6 @@ export class TilesRendererBase {
 					this.rootLoadingState = LOADED;
 					this.rootTileset = root;
 					this.dispatchEvent( { type: 'needs-update' } );
-					this.dispatchEvent( { type: 'load-content' } );
 					this.dispatchEvent( {
 						type: 'load-tileset',
 						tileset: root,
@@ -525,24 +847,11 @@ export class TilesRendererBase {
 		usedSet.forEach( tile => lruCache.markUnused( tile ) );
 		usedSet.clear();
 
-		// assign the correct callbacks
-		const priorityCallback = optimizedLoadStrategy ? optimizedPriorityCallback : defaultPriorityCallback;
-		downloadQueue.priorityCallback = priorityCallback;
-		parseQueue.priorityCallback = priorityCallback;
-
 		// prepare for traversal
 		this.prepareForTraversal();
 
 		// run traversal
-		if ( optimizedLoadStrategy ) {
-
-			optimizedRunTraversal( root, this );
-
-		} else {
-
-			runTraversal( root, this );
-
-		}
+		runTraversal( root, this );
 
 		// remove any tiles that are loading but no longer used
 		this.removeUnusedPendingTiles();
@@ -579,6 +888,9 @@ export class TilesRendererBase {
 
 	}
 
+	/**
+	 * Resets any tiles that previously failed to load so they will be retried on the next `update`.
+	 */
 	resetFailedTiles() {
 
 		// reset the root tile if it's finished but never loaded
@@ -675,6 +987,10 @@ export class TilesRendererBase {
 
 	}
 
+	/**
+	 * Disposes all loaded tiles and unregisters all plugins. The renderer should not
+	 * be used after calling this.
+	 */
 	dispose() {
 
 		// dispose of all the plugins
@@ -725,10 +1041,24 @@ export class TilesRendererBase {
 
 	}
 
+	/**
+	 * Dispatches an event to all registered listeners for the given event type.
+	 * @param {{ type: string }} e
+	 */
 	dispatchEvent( e ) {}
 
+	/**
+	 * Registers a listener for the given event type.
+	 * @param {string} name
+	 * @param {EventCallback} callback
+	 */
 	addEventListener( name, callback ) {}
 
+	/**
+	 * Removes a previously registered event listener.
+	 * @param {string} name
+	 * @param {EventCallback} callback
+	 */
 	removeEventListener( name, callback ) {}
 
 	parseTile( buffer, tile, extension ) {
@@ -741,20 +1071,34 @@ export class TilesRendererBase {
 
 	disposeTile( tile ) {
 
-		// TODO: are these necessary? Are we disposing tiles when they are currently visible?
+		// TODO:
+		// The way this is structured means that plugin dispose tile functions will be fired first, then
+		// visibility changes. This ordering is not intuitive.
+
+		// Need to mirror the "traverseFunctions" behavior for empty tiles (eg internal tile sets)
 		if ( tile.traversal.visible ) {
 
-			this.invokeOnePlugin( plugin => plugin.setTileVisible && plugin.setTileVisible( tile, false ) );
+			if ( tile.internal.hasRenderableContent ) {
+
+				this.invokeOnePlugin( plugin => plugin.setTileVisible && plugin.setTileVisible( tile, false ) );
+
+			} else {
+
+				this.invokeOnePlugin( plugin => plugin.setEmptyTileVisible && plugin.setEmptyTileVisible( tile, false ) );
+
+			}
+
 			tile.traversal.visible = false;
 
 		}
 
-		if ( tile.traversal.active ) {
+		if ( tile.traversal.active && tile.internal.hasRenderableContent ) {
 
 			this.invokeOnePlugin( plugin => plugin.setTileActive && plugin.setTileActive( tile, false ) );
-			tile.traversal.active = false;
 
 		}
+
+		tile.traversal.active = false;
 
 		const { scene } = tile.engineData;
 		if ( scene ) {
@@ -813,6 +1157,12 @@ export class TilesRendererBase {
 			basePath: tilesetDir,
 			depth: - 1,
 			depthFromRenderedParent: - 1,
+			isVirtual: false,
+			virtualChildCount: 0,
+			renderer: this,
+
+			// preserve any pre-seeded fields
+			...tile.internal,
 		};
 
 		if ( tile.content?.uri ) {
@@ -850,6 +1200,7 @@ export class TilesRendererBase {
 			distanceFromCamera: Infinity,
 			error: Infinity,
 			inFrustum: false,
+			wasInFrustum: false,
 			isLeaf: false,
 			used: false,
 			usedLastFrame: false,
@@ -858,6 +1209,7 @@ export class TilesRendererBase {
 			active: false,
 			wasSetActive: false,
 			allChildrenReady: false,
+			allChildrenLoaded: false,
 			kicked: false,
 			allUsedChildrenProcessed: false,
 			lastFrameVisited: - 1,
@@ -984,7 +1336,7 @@ export class TilesRendererBase {
 	ensureChildrenArePreprocessed( tile, forceImmediate = this.stats.tilesProcessed < this.maxTilesProcessed ) {
 
 		const children = tile.children;
-		if ( children.length === 0 || children[ 0 ].internal ) {
+		if ( children.length === 0 || children[ children.length - 1 ].traversal ) {
 
 			return;
 
@@ -994,8 +1346,12 @@ export class TilesRendererBase {
 
 			for ( let i = 0, l = children.length; i < l; i ++ ) {
 
-				this.preprocessNode( children[ i ], tile.internal.basePath, tile );
+				const child = children[ i ];
+				if ( child && ! child.traversal ) {
 
+					this.preprocessNode( child, tile.internal.basePath, tile );
+
+				}
 
 			}
 
@@ -1070,14 +1426,6 @@ export class TilesRendererBase {
 
 	preprocessTileset( json, url, parent = null ) {
 
-		// check for deprecated function usage
-		const proto = Object.getPrototypeOf( this );
-		if ( Object.hasOwn( proto, 'preprocessTileSet' ) ) {
-
-			console.warn( `${ proto.constructor.name }: Class overrides deprecated "preprocessTileSet" method. Please rename to "preprocessTileset".` );
-
-		}
-
 		const version = json.asset.version;
 		const [ major, minor ] = version.split( '.' ).map( v => parseInt( v ) );
 		console.assert(
@@ -1098,22 +1446,7 @@ export class TilesRendererBase {
 
 	}
 
-	preprocessTileSet( ...args ) {
-
-		console.warn( 'TilesRenderer: "preprocessTileSet" has been deprecated. Use "preprocessTileset" instead.' );
-		return this.preprocessTileset( ...args );
-
-	}
-
 	loadRootTileset() {
-
-		// check for deprecated function usage
-		const proto = Object.getPrototypeOf( this );
-		if ( Object.hasOwn( proto, 'loadRootTileSet' ) ) {
-
-			console.warn( `${ proto.constructor.name }: Class overrides deprecated "loadRootTileSet" method. Please rename to "loadRootTileset".` );
-
-		}
 
 		// transform the url
 		let processedUrl = this.rootURL;
@@ -1162,13 +1495,6 @@ export class TilesRendererBase {
 
 	}
 
-	loadRootTileSet( ...args ) {
-
-		console.warn( 'TilesRenderer: "loadRootTileSet" has been deprecated. Use "loadRootTileset" instead.' );
-		return this.loadRootTileSet( ...args );
-
-	}
-
 	requestTileContents( tile ) {
 
 		// If the tile is already being loaded then don't
@@ -1181,15 +1507,15 @@ export class TilesRendererBase {
 
 		let isExternalTileset = false;
 		let externalTileset = null;
-		let uri = new URL( tile.content.uri, tile.internal.basePath + '/' ).toString();
-		this.invokeAllPlugins( plugin => uri = plugin.preprocessURL ? plugin.preprocessURL( uri, tile ) : uri );
+		let url = new URL( tile.content.uri, tile.internal.basePath + '/' ).toString();
+		this.invokeAllPlugins( plugin => url = plugin.preprocessURL ? plugin.preprocessURL( url, tile ) : url );
 
 		const stats = this.stats;
 		const lruCache = this.lruCache;
 		const downloadQueue = this.downloadQueue;
 		const parseQueue = this.parseQueue;
 		const loadingTiles = this.loadingTiles;
-		const extension = getUrlExtension( uri );
+		const extension = getUrlExtension( url );
 
 		// track an abort controller and pass-through the below conditions if aborted
 		const controller = new AbortController();
@@ -1285,8 +1611,18 @@ export class TilesRendererBase {
 			stats.downloading ++;
 			stats.queued --;
 
-			const res = this.invokeOnePlugin( plugin => plugin.fetchData && plugin.fetchData( uri, { ...this.fetchOptions, signal } ) );
-			this.dispatchEvent( { type: 'tile-download-start', tile, uri } );
+			const res = this.invokeOnePlugin( plugin => plugin.fetchData && plugin.fetchData( url, { ...this.fetchOptions, signal } ) );
+			this.dispatchEvent( {
+				type: 'tile-download-start',
+				tile,
+				url,
+				get uri() {
+
+					console.warn( 'tile-download-start event: "uri" has been renamed to "url".' );
+					return this.url;
+
+				},
+			} );
 			return res;
 
 		} )
@@ -1308,7 +1644,7 @@ export class TilesRendererBase {
 
 				} else {
 
-					throw new Error( `Failed to load model with error code ${res.status}` );
+					throw new Error( `Failed to load model with error code ${ res.status }` );
 
 				}
 
@@ -1337,7 +1673,7 @@ export class TilesRendererBase {
 
 					if ( extension === 'json' && content.root ) {
 
-						this.preprocessTileset( content, uri, tile );
+						this.preprocessTileset( content, url, tile );
 						tile.children.push( content.root );
 						externalTileset = content;
 						isExternalTileset = true;
@@ -1345,7 +1681,7 @@ export class TilesRendererBase {
 
 					} else {
 
-						return this.invokeOnePlugin( plugin => plugin.parseTile && plugin.parseTile( content, parseTile, extension, uri, signal ) );
+						return this.invokeOnePlugin( plugin => plugin.parseTile && plugin.parseTile( content, parseTile, extension, url, signal ) );
 
 					}
 
@@ -1385,13 +1721,12 @@ export class TilesRendererBase {
 				// dispatch an event indicating that this model has completed and that a new
 				// call to "update" is needed.
 				this.dispatchEvent( { type: 'needs-update' } );
-				this.dispatchEvent( { type: 'load-content' } );
 				if ( isExternalTileset ) {
 
 					this.dispatchEvent( {
 						type: 'load-tileset',
 						tileset: externalTileset,
-						url: uri,
+						url,
 					} );
 
 				}
@@ -1402,7 +1737,7 @@ export class TilesRendererBase {
 						type: 'load-model',
 						scene: tile.engineData.scene,
 						tile,
-						url: uri,
+						url,
 					} );
 
 				}
@@ -1452,7 +1787,7 @@ export class TilesRendererBase {
 						type: 'load-error',
 						tile,
 						error,
-						url: uri,
+						url,
 					} );
 
 				} else {

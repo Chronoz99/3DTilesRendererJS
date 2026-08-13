@@ -1,3 +1,4 @@
+/** @import { Object3D, Camera } from 'three' */
 import {
 	Matrix4,
 	Quaternion,
@@ -7,7 +8,6 @@ import {
 	Plane,
 	EventDispatcher,
 	MathUtils,
-	Clock,
 	Ray,
 } from 'three';
 import { PivotPointMesh } from './PivotPointMesh.js';
@@ -19,6 +19,7 @@ export const DRAG = 1;
 export const ROTATE = 2;
 export const ZOOM = 3;
 export const WAITING = 4;
+export const FREE_ROTATE = 5;
 
 const DRAG_PLANE_THRESHOLD = 0.05;
 const DRAG_UP_THRESHOLD = 0.025;
@@ -40,6 +41,7 @@ const _mouseBefore = /* @__PURE__ */ new Vector3();
 const _mouseAfter = /* @__PURE__ */ new Vector3();
 const _identityQuat = /* @__PURE__ */ new Quaternion();
 const _ray = /* @__PURE__ */ new Ray();
+const _flightDir = /* @__PURE__ */ new Vector3();
 
 const _zoomPointPointer = /* @__PURE__ */ new Vector2();
 const _pointer = /* @__PURE__ */ new Vector2();
@@ -52,8 +54,22 @@ const _changeEvent = { type: 'change' };
 const _startEvent = { type: 'start' };
 const _endEvent = { type: 'end' };
 
+/**
+ * Camera controls for exploring a 3D environment. Supports drag-to-pan, scroll-to-zoom,
+ * right-click-to-rotate, and optional damping/inertia. Works with any Three.js scene.
+ * @extends EventDispatcher
+ * @param {Object3D} [scene=null] - The scene to raycast against for surface interaction.
+ * @param {Camera} [camera=null] - The camera to control.
+ * @param {HTMLElement} [domElement=null] - The DOM element to attach pointer events to.
+ */
 export class EnvironmentControls extends EventDispatcher {
 
+	/**
+	 * Whether the controls are active. When set to false, all input is ignored
+	 * and inertia is cleared.
+	 * @type {boolean}
+	 * @default true
+	 */
 	get enabled() {
 
 		return this._enabled;
@@ -79,7 +95,7 @@ export class EnvironmentControls extends EventDispatcher {
 
 	}
 
-	constructor( scene = null, camera = null, domElement = null, tilesRenderer = null ) {
+	constructor( scene = null, camera = null, domElement = null ) {
 
 		super();
 
@@ -92,21 +108,128 @@ export class EnvironmentControls extends EventDispatcher {
 
 		// settings
 		this._enabled = true;
+
+		/**
+		 * Minimum camera distance above the surface in world units. Prevents clipping into terrain.
+		 * @type {number}
+		 * @default 5
+		 */
 		this.cameraRadius = 5;
+
+		/**
+		 * Rotation sensitivity multiplier.
+		 * @type {number}
+		 * @default 1
+		 */
 		this.rotationSpeed = 1;
+
+		/**
+		 * Minimum camera angle above the horizon in radians.
+		 * @type {number}
+		 * @default 0
+		 */
 		this.minAltitude = 0;
+
+		/**
+		 * Maximum camera angle above the horizon in radians.
+		 * @type {number}
+		 * @default 0.45 * Math.PI
+		 */
 		this.maxAltitude = 0.45 * Math.PI;
+
+		/**
+		 * Minimum zoom distance in world units.
+		 * @type {number}
+		 * @default 10
+		 */
 		this.minDistance = 10;
+
+		/**
+		 * Maximum zoom distance in world units.
+		 * @type {number}
+		 * @default Infinity
+		 */
 		this.maxDistance = Infinity;
+
+		/**
+		 * Minimum orthographic zoom level.
+		 * @type {number}
+		 * @default 0
+		 */
 		this.minZoom = 0;
+
+		/**
+		 * Maximum orthographic zoom level.
+		 * @type {number}
+		 * @default Infinity
+		 */
 		this.maxZoom = Infinity;
+
+		/**
+		 * Zoom sensitivity multiplier.
+		 * @type {number}
+		 * @default 1
+		 */
 		this.zoomSpeed = 1;
+
+		/**
+		 * When true, the camera height is automatically adjusted to avoid clipping into the terrain.
+		 * @type {boolean}
+		 * @default true
+		 */
 		this.adjustHeight = true;
+
+		/**
+		 * When true, camera movements decelerate gradually after input ends.
+		 * @type {boolean}
+		 * @default false
+		 */
 		this.enableDamping = false;
+
+		/**
+		 * Rate of inertia decay per frame when damping is enabled. Lower values produce longer coasting.
+		 * @type {number}
+		 * @default 0.15
+		 */
 		this.dampingFactor = 0.15;
 
+		/**
+		 * Fallback plane used for drag/zoom when no scene geometry is hit.
+		 * @type {Plane}
+		 * @default new Plane( UP, 0 )
+		 */
 		this.fallbackPlane = new Plane( new Vector3( 0, 1, 0 ), 0 );
+
+		/**
+		 * When true, the fallback plane is used when raycasting misses scene geometry.
+		 * @type {boolean}
+		 * @default true
+		 */
 		this.useFallbackPlane = true;
+
+		/**
+		 * When true, enables keyboard flight: W/A/S/D and arrow keys move forward/back/strafe, Q/E move
+		 * up/down, and Shift multiplies speed by `flightSpeedMultiplier`. Right-click or Shift+left-click
+		 * enters free-look mode, rotating the camera in place without requiring a surface hit. Only
+		 * supported for perspective cameras.
+		 * @type {boolean}
+		 * @default false
+		 */
+		this.enableFlight = false;
+
+		/**
+		 * Base camera speed in world units per second during keyboard flight.
+		 * @type {number}
+		 * @default 10
+		 */
+		this.flightSpeed = 10;
+
+		/**
+		 * Speed multiplier applied when the fast key is held during flight.
+		 * @type {number}
+		 * @default 4
+		 */
+		this.flightSpeedMultiplier = 4;
 
 		// settings for GlobeControls
 		this.scaleZoomOrientationAtEdges = false;
@@ -145,7 +268,9 @@ export class EnvironmentControls extends EventDispatcher {
 		this.raycaster.firstHitOnly = true;
 
 		this.up = new Vector3( 0, 1, 0 );
-		this.clock = new Clock();
+		this._lastTime = performance.now();
+
+		this._keysDown = new Set();
 
 		this._detachCallback = null;
 		this._upInitialized = false;
@@ -159,16 +284,34 @@ export class EnvironmentControls extends EventDispatcher {
 		if ( domElement ) this.attach( domElement );
 		if ( camera ) this.setCamera( camera );
 		if ( scene ) this.setScene( scene );
-		if ( tilesRenderer ) this.setTilesRenderer( tilesRenderer );
 
 	}
 
+	_getDeltaTime() {
+
+		// custom delta time function that increments the last time used since "Clock" has
+		// been removed from three.js.
+		const curr = performance.now();
+		const delta = curr - this._lastTime;
+		this._lastTime = curr;
+		return delta * 1e-3;
+
+	}
+
+	/**
+	 * Sets the scene to raycast against for surface-based interaction.
+	 * @param {Object3D} scene
+	 */
 	setScene( scene ) {
 
 		this.scene = scene;
 
 	}
 
+	/**
+	 * Sets the camera to control.
+	 * @param {Camera} camera
+	 */
 	setCamera( camera ) {
 
 		this.camera = camera;
@@ -181,19 +324,10 @@ export class EnvironmentControls extends EventDispatcher {
 
 	}
 
-	setTilesRenderer( tilesRenderer ) {
-
-		console.warn( 'EnvironmentControls: "setTilesRenderer" has been deprecated. Use "setScene" and "setEllipsoid", instead.' );
-
-		this.tilesRenderer = tilesRenderer;
-		if ( this.tilesRenderer !== null ) {
-
-			this.setScene( this.tilesRenderer.group );
-
-		}
-
-	}
-
+	/**
+	 * Attaches the controls to a DOM element, registering all pointer and keyboard event listeners.
+	 * @param {HTMLElement} domElement
+	 */
 	attach( domElement ) {
 
 		if ( this.domElement ) {
@@ -207,6 +341,15 @@ export class EnvironmentControls extends EventDispatcher {
 		this.domElement = domElement;
 		this.pointerTracker.domElement = domElement;
 		domElement.style.touchAction = 'none';
+
+		// Ensure the element can receive keyboard focus. If no tabindex attribute is
+		// present, set it to -1 so the element is programmatically focusable without
+		// being inserted into the tab order.
+		if ( ! domElement.hasAttribute( 'tabindex' ) ) {
+
+			domElement.tabIndex = - 1;
+
+		}
 
 		const contextMenuCallback = e => {
 
@@ -223,15 +366,6 @@ export class EnvironmentControls extends EventDispatcher {
 
 		const pointerdownCallback = e => {
 
-			// exit early if the controls are disabled
-			if ( ! this.enabled ) {
-
-				return;
-
-			}
-
-			e.preventDefault();
-
 			const {
 				camera,
 				raycaster,
@@ -242,7 +376,19 @@ export class EnvironmentControls extends EventDispatcher {
 				scene,
 				pivotPoint,
 				enabled,
+				enableFlight,
+				_keysDown,
 			} = this;
+
+			// exit early if the controls are disabled
+			if ( ! this.enabled ) {
+
+				return;
+
+			}
+
+			e.preventDefault();
+			domElement.focus();
 
 			// init the pointer
 			pointerTracker.addPointer( e );
@@ -283,6 +429,34 @@ export class EnvironmentControls extends EventDispatcher {
 
 			}
 
+			// free-look around the camera origin when flight is active with any flight key held, or shift/right-click
+			const anyFlightKey =
+				_keysDown.has( 'w' ) ||
+				_keysDown.has( 's' ) ||
+				_keysDown.has( 'a' ) ||
+				_keysDown.has( 'd' ) ||
+				_keysDown.has( 'q' ) ||
+				_keysDown.has( 'e' ) ||
+				_keysDown.has( 'arrowup' ) ||
+				_keysDown.has( 'arrowdown' ) ||
+				_keysDown.has( 'arrowleft' ) ||
+				_keysDown.has( 'arrowright' ) ||
+				_keysDown.has( 'shift' );
+
+			if (
+				enableFlight && anyFlightKey &&
+				! pointerTracker.isPointerTouch() && (
+					pointerTracker.isRightClicked() ||
+					pointerTracker.isLeftClicked()
+				)
+			) {
+
+				pivotPoint.copy( camera.position );
+				this.setState( FREE_ROTATE );
+				return;
+
+			}
+
 			// find the hit point
 			const hit = this._raycast( raycaster );
 			if ( hit ) {
@@ -295,23 +469,23 @@ export class EnvironmentControls extends EventDispatcher {
 					pointerTracker.isLeftClicked() && e.shiftKey
 				) {
 
-					this.setState( pointerTracker.isPointerTouch() ? WAITING : ROTATE );
-
 					pivotPoint.copy( hit.point );
 					pivotMesh.position.copy( hit.point );
 					pivotMesh.visible = pointerTracker.isPointerTouch() ? false : enabled;
 					pivotMesh.updateMatrixWorld();
 					scene.add( pivotMesh );
 
+					this.setState( pointerTracker.isPointerTouch() ? WAITING : ROTATE );
+
 				} else if ( pointerTracker.isLeftClicked() ) {
 
-					// if the clicked point is coming from below the plane then don't perform the drag
-					this.setState( DRAG );
 					pivotPoint.copy( hit.point );
-
 					pivotMesh.position.copy( hit.point );
 					pivotMesh.updateMatrixWorld();
 					scene.add( pivotMesh );
+
+					// if the clicked point is coming from below the plane then don't perform the drag
+					this.setState( DRAG );
 
 				}
 
@@ -516,6 +690,49 @@ export class EnvironmentControls extends EventDispatcher {
 		document.addEventListener( 'pointerup', pointerupCallback );
 		document.addEventListener( 'pointerleave', pointerleaveCallback );
 
+		const keydownCallback = e => {
+
+			const { _keysDown, state } = this;
+
+			_keysDown.add( e.key.toLowerCase() );
+
+			// reset any activities if a key is pressed unless FREE_ROTATE is being used
+			const anyFlightKey =
+				_keysDown.has( 'w' ) ||
+				_keysDown.has( 's' ) ||
+				_keysDown.has( 'a' ) ||
+				_keysDown.has( 'd' ) ||
+				_keysDown.has( 'q' ) ||
+				_keysDown.has( 'e' ) ||
+				_keysDown.has( 'arrowup' ) ||
+				_keysDown.has( 'arrowdown' ) ||
+				_keysDown.has( 'arrowleft' ) ||
+				_keysDown.has( 'arrowright' );
+
+			if ( anyFlightKey && state !== FREE_ROTATE ) {
+
+				this.resetState();
+
+			}
+
+		};
+
+		const keyupCallback = e => {
+
+			this._keysDown.delete( e.key.toLowerCase() );
+
+		};
+
+		const blurCallback = () => {
+
+			this._keysDown.clear();
+
+		};
+
+		domElement.addEventListener( 'keydown', keydownCallback );
+		window.addEventListener( 'keyup', keyupCallback );
+		window.addEventListener( 'blur', blurCallback );
+
 		this._detachCallback = () => {
 
 			domElement.removeEventListener( 'contextmenu', contextMenuCallback );
@@ -526,10 +743,17 @@ export class EnvironmentControls extends EventDispatcher {
 			document.removeEventListener( 'pointerup', pointerupCallback );
 			document.removeEventListener( 'pointerleave', pointerleaveCallback );
 
+			domElement.removeEventListener( 'keydown', keydownCallback );
+			window.removeEventListener( 'keyup', keyupCallback );
+			window.removeEventListener( 'blur', blurCallback );
+
 		};
 
 	}
 
+	/**
+	 * Detaches the controls from the DOM element, removing all event listeners.
+	 */
 	detach() {
 
 		this.domElement = null;
@@ -544,20 +768,33 @@ export class EnvironmentControls extends EventDispatcher {
 
 	}
 
-	// override-able functions for retrieving the up direction at a point
+	/**
+	 * Returns the local up direction at a world-space point. Override to provide terrain-aware
+	 * up vectors (e.g. ellipsoid normals). Default returns the controls' `up` vector.
+	 * @param {Vector3} point - World-space point to query.
+	 * @param {Vector3} target - Target vector to write the result into.
+	 */
 	getUpDirection( point, target ) {
 
 		target.copy( this.up );
 
 	}
 
+	/**
+	 * Returns the local up direction at the camera's current position.
+	 * @param {Vector3} target - Target vector to write the result into.
+	 */
 	getCameraUpDirection( target ) {
 
 		this.getUpDirection( this.camera.position, target );
 
 	}
 
-	// returns the active / last used pivot point for the scene
+	/**
+	 * Returns the current drag or rotation pivot point in world space.
+	 * @param {Vector3} target - Target vector to write the result into.
+	 * @returns {Vector3|null} The target vector, or null if no pivot is active.
+	 */
 	getPivotPoint( target ) {
 
 		let result = null;
@@ -609,6 +846,9 @@ export class EnvironmentControls extends EventDispatcher {
 
 	}
 
+	/**
+	 * Clears the current interaction state, cancelling any active drag, rotate, or zoom.
+	 */
 	resetState() {
 
 		if ( this.state !== NONE ) {
@@ -625,6 +865,11 @@ export class EnvironmentControls extends EventDispatcher {
 
 	}
 
+	/**
+	 * Sets the current control state (e.g. `NONE`, `DRAG`, `ROTATE`, `ZOOM`).
+	 * @param {number} [state] - One of the exported state constants. Defaults to current state.
+	 * @param {boolean} [fireEvent=true] - Whether to dispatch `'start'` and `'end'` events.
+	 */
 	setState( state = this.state, fireEvent = true ) {
 
 		if ( this.state === state ) {
@@ -653,7 +898,11 @@ export class EnvironmentControls extends EventDispatcher {
 
 	}
 
-	update( deltaTime = Math.min( this.clock.getDelta(), 64 / 1000 ) ) {
+	/**
+	 * Applies pending input and inertia to the camera. Must be called each frame.
+	 * @param {number} [deltaTime] - Time in seconds since the last frame. Defaults to the clock delta, capped at 64ms.
+	 */
+	update( deltaTime = Math.min( this._getDeltaTime(), 64 / 1000 ) ) {
 
 		if ( ! this.enabled || ! this.camera || deltaTime === 0 ) {
 
@@ -696,7 +945,7 @@ export class EnvironmentControls extends EventDispatcher {
 			this._updatePosition( deltaTime );
 			this._updateRotation( deltaTime );
 
-			if ( state === DRAG || state === ROTATE ) {
+			if ( state === DRAG || state === ROTATE || state === FREE_ROTATE ) {
 
 				_forward.set( 0, 0, - 1 ).transformDirection( camera.matrixWorld );
 				this.inertiaTargetDistance = _vec.copy( pivotPoint ).sub( camera.position ).dot( _forward );
@@ -717,17 +966,26 @@ export class EnvironmentControls extends EventDispatcher {
 
 		}
 
+		const didFly = this._updateFlight( deltaTime );
+		if ( didFly ) {
+
+			this.dragInertia.set( 0, 0, 0 );
+			this.rotationInertia.set( 0, 0, 0 );
+			this.dispatchEvent( _changeEvent );
+
+		}
+
 		// update the up direction based on where the camera moved to
 		// if using an orthographic camera then rotate around drag pivot
 		// reuse the "hit" information since it can be slow to perform multiple hits
-		const hit = camera.isOrthographicCamera ? null : adjustHeight && this._getPointBelowCamera() || null;
+		const hit = camera.isOrthographicCamera ? null : ( adjustHeight && ! didFly && this._getPointBelowCamera() ) || null;
 		this.getCameraUpDirection( _localUp );
 		this._setFrame( _localUp );
 
 		// when dragging the camera and drag point may be moved
 		// to accommodate terrain so we try to move it back down
 		// to the original point.
-		if ( ( this.state === DRAG || this.state === ROTATE ) && this.actionHeightOffset !== 0 ) {
+		if ( ( this.state === DRAG || this.state === ROTATE || this.state === FREE_ROTATE ) && this.actionHeightOffset !== 0 ) {
 
 			const { actionHeightOffset } = this;
 			camera.position.addScaledVector( up, - actionHeightOffset );
@@ -760,7 +1018,7 @@ export class EnvironmentControls extends EventDispatcher {
 
 		this.pointerTracker.updateFrame();
 
-		if ( adjustCameraRotation && autoAdjustCameraRotation ) {
+		if ( ( adjustCameraRotation && autoAdjustCameraRotation ) || didFly ) {
 
 			this.getCameraUpDirection( _localUp );
 			this._alignCameraUp( _localUp, 1 );
@@ -768,12 +1026,15 @@ export class EnvironmentControls extends EventDispatcher {
 			this.getCameraUpDirection( _localUp );
 			this._clampRotation( _localUp );
 
-
 		}
 
 	}
 
-	// updates the camera to position it based on the constraints of the controls
+	/**
+	 * Adjusts the camera to satisfy altitude and distance constraints. Called automatically by `update`.
+	 * Override in subclasses to add custom camera adjustment behaviour (e.g. near/far plane updates).
+	 * @param {Camera} camera
+	 */
 	adjustCamera( camera ) {
 
 		const { adjustHeight, cameraRadius } = this;
@@ -797,6 +1058,9 @@ export class EnvironmentControls extends EventDispatcher {
 
 	}
 
+	/**
+	 * Disposes of event listeners and internal resources. Calls `detach` if currently attached.
+	 */
 	dispose() {
 
 		this.detach();
@@ -914,6 +1178,66 @@ export class EnvironmentControls extends EventDispatcher {
 
 		const { rotationInertia, dragInertia } = this;
 		return rotationInertia.lengthSq() !== 0 || dragInertia.lengthSq() !== 0;
+
+	}
+
+	_getFlightSpeedScale() {
+
+		return 1;
+
+	}
+
+	_updateFlight( deltaTime ) {
+
+		const {
+			camera,
+			enableFlight,
+			flightSpeed,
+			flightSpeedMultiplier,
+			_keysDown,
+		} = this;
+
+		if ( ! enableFlight || camera.isOrthographicCamera ) {
+
+			return false;
+
+		}
+
+		// get key state
+		const forward = _keysDown.has( 'w' ) || _keysDown.has( 'arrowup' );
+		const back = _keysDown.has( 's' ) || _keysDown.has( 'arrowdown' );
+		const left = _keysDown.has( 'a' ) || _keysDown.has( 'arrowleft' );
+		const right = _keysDown.has( 'd' ) || _keysDown.has( 'arrowright' );
+		const up = _keysDown.has( 'q' );
+		const down = _keysDown.has( 'e' );
+
+		// calculate speed
+		const mult = _keysDown.has( 'shift' ) ? flightSpeedMultiplier : 1;
+		const speed = mult * flightSpeed * this._getFlightSpeedScale() * deltaTime;
+
+		// calculate direction
+		_flightDir.set(
+			( right ? 1 : 0 ) - ( left ? 1 : 0 ),
+			( up ? 1 : 0 ) - ( down ? 1 : 0 ),
+			( back ? 1 : 0 ) - ( forward ? 1 : 0 ),
+		);
+
+		// early out if there's no flight direction
+		if ( _flightDir.lengthSq() === 0 ) {
+
+			return false;
+
+		}
+
+		// fly relative to the camera direction
+		_flightDir
+			.normalize()
+			.transformDirection( camera.matrixWorld );
+
+		camera.position.addScaledVector( _flightDir, speed );
+		camera.updateMatrixWorld();
+
+		return true;
 
 	}
 
@@ -1036,6 +1360,11 @@ export class EnvironmentControls extends EventDispatcher {
 					const dist = hit.distance;
 					finalZoomDirection.set( 0, 0, - 1 ).transformDirection( camera.matrixWorld );
 					camera.position.addScaledVector( finalZoomDirection, scale * dist * 0.01 );
+					camera.updateMatrixWorld();
+
+				} else {
+
+					camera.position.addScaledVector( zoomDirection, scale );
 					camera.updateMatrixWorld();
 
 				}
@@ -1233,7 +1562,14 @@ export class EnvironmentControls extends EventDispatcher {
 			rotationInertia,
 		} = this;
 
-		if ( state === ROTATE ) {
+		if ( state === ROTATE || state === FREE_ROTATE ) {
+
+			// keep the pivot glued to the camera for first-person look-around
+			if ( state === FREE_ROTATE ) {
+
+				pivotPoint.copy( this.camera.position );
+
+			}
 
 			// get the rotation motion and divide out the container height to normalize for element size
 			pointerTracker.getCenterPoint( _pointer );
@@ -1439,7 +1775,7 @@ export class EnvironmentControls extends EventDispatcher {
 
 		// calculate the active point
 		let fixedPoint = null;
-		if ( state === DRAG || state === ROTATE ) {
+		if ( state === DRAG || state === ROTATE || state === FREE_ROTATE ) {
 
 			fixedPoint = _pos.copy( pivotPoint );
 
@@ -1520,7 +1856,7 @@ export class EnvironmentControls extends EventDispatcher {
 
 		// calculate the active point
 		let fixedPoint = null;
-		if ( state === DRAG || state === ROTATE ) {
+		if ( state === DRAG || state === ROTATE || state === FREE_ROTATE ) {
 
 			fixedPoint = _pos.copy( pivotPoint );
 

@@ -1,10 +1,23 @@
-import { GoogleCloudAuth } from '3d-tiles-renderer/core/plugins';
+import { GoogleCloudAuth } from './auth/GoogleCloudAuth.js';
 import { GoogleAttributionsManager } from './GoogleAttributionsManager.js';
 
 const TILES_3D_API = 'https://tile.googleapis.com/v1/3dtiles/root.json';
 
+/**
+ * Plugin for authenticating requests to the Google Cloud Maps APIs, including the
+ * Photorealistic 3D Tiles and 2D Map Tiles APIs. Handles session-token management,
+ * per-tile attribution collection, and optional logo attribution.
+ */
 export class GoogleCloudAuthPlugin {
 
+	/**
+	 * @param {Object} options
+	 * @param {string} options.apiToken
+	 * @param {Object|null} [options.sessionOptions=null]
+	 * @param {boolean} [options.autoRefreshToken=false]
+	 * @param {string|null} [options.logoUrl=null]
+	 * @param {boolean} [options.useRecommendedSettings=true]
+	 */
 	constructor( {
 		apiToken,
 		sessionOptions = null,
@@ -15,11 +28,27 @@ export class GoogleCloudAuthPlugin {
 
 		this.name = 'GOOGLE_CLOUD_AUTH_PLUGIN';
 
+		/**
+		 * The Google Cloud API key.
+		 * @type {string}
+		 */
 		this.apiToken = apiToken;
+		/**
+		 * Whether to apply recommended renderer settings for photorealistic tiles.
+		 * @type {boolean}
+		 */
 		this.useRecommendedSettings = useRecommendedSettings;
+		/**
+		 * URL of a logo image to include in attribution output, or null if not set.
+		 * @type {string|null}
+		 */
 		this.logoUrl = logoUrl;
 
 		this.auth = new GoogleCloudAuth( { apiToken, autoRefreshToken, sessionOptions } );
+		/**
+		 * The TilesRenderer instance this plugin is registered with.
+		 * @type {Object|null}
+		 */
 		this.tiles = null;
 
 		this._visibilityChangeCallback = null;
@@ -88,34 +117,16 @@ export class GoogleCloudAuthPlugin {
 
 		const tiles = this.tiles;
 
-		// If cachedRootJson is provided, skip fetching and use the cached data
+		// The base renderer owns root loading in v0.5.x. When a cached root is
+		// supplied, prime the auth session before the base renderer starts
+		// requesting child tiles.
 		if ( tiles.cachedRootJson ) {
 
-			console.log( 'GoogleCloudAuthPlugin: Using cachedRootJson, skipping fetch' );
-
-			// Process the cached JSON to extract session info if present
 			this._processResponse( tiles.cachedRootJson );
-
-			// Chain to the next plugin or base implementation
-			return tiles.invokeOnePlugin( plugin => plugin !== this && plugin.loadRootTileset && plugin.loadRootTileset() );
 
 		}
 
-		// initialize href to resolve the root in case it's specified as a relative url
-		let url = new URL( tiles.rootURL, location.href );
-		tiles.invokeAllPlugins( plugin => url = plugin.preprocessURL ? plugin.preprocessURL( url, null ) : url );
-
-		return tiles
-			.invokeOnePlugin( plugin => plugin.fetchData && plugin.fetchData( url, tiles.fetchOptions ) )
-			.then( res => res.json() )
-			.then( json => {
-
-				this._processResponse( json );
-
-				// chain to the next plugin or base implementation
-				return tiles.invokeOnePlugin( plugin => plugin !== this && plugin.loadRootTileset && plugin.loadRootTileset() );
-
-			} );
+		return tiles.invokeOnePlugin( plugin => plugin !== this && plugin.loadRootTileset && plugin.loadRootTileset() );
 
 	}
 
@@ -138,6 +149,7 @@ export class GoogleCloudAuthPlugin {
 						return new URLSearchParams( params ).get( 'session' );
 
 					}
+
 					if ( tile.children ) {
 
 						for ( const child of tile.children ) {
@@ -148,6 +160,7 @@ export class GoogleCloudAuthPlugin {
 						}
 
 					}
+
 					return null;
 
 				};
@@ -189,9 +202,9 @@ export class GoogleCloudAuthPlugin {
 
 	}
 
-	async fetchData( uri, options ) {
+	async fetchData( url, options ) {
 
-		return this.auth.fetch( uri, options );
+		return this.auth.fetch( url, options );
 
 	}
 

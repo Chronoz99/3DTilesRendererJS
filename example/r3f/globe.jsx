@@ -19,7 +19,7 @@ import {
 	TilesFadePlugin,
 	GLTFExtensionsPlugin,
 } from '3d-tiles-renderer/plugins';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 // R3F, DREI and LEVA imports
 import { Canvas, useFrame } from '@react-three/fiber';
@@ -29,7 +29,7 @@ import { MathUtils, Vector3 } from 'three';
 import { TilesLoadingBar } from './components/TilesLoadingBar.jsx';
 import { CameraViewTransition } from './components/CameraViewTransition.jsx';
 
-const dracoLoader = new DRACOLoader().setDecoderPath( 'https://www.gstatic.com/draco/v1/decoders/' );
+const dracoLoader = new DRACOLoader();
 const vec1 = new Vector3();
 const vec2 = new Vector3();
 

@@ -12,9 +12,9 @@ import {
 	Vector2,
 	Matrix4,
 } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 let camera, controls, scene, renderer;
 let dirLight;
@@ -71,7 +71,6 @@ function init() {
 	const i3dmLoader = new I3DMLoader();
 
 	const dracoLoader = new DRACOLoader();
-	dracoLoader.setDecoderPath( 'https://unpkg.com/three@0.153.0/examples/jsm/libs/draco/gltf/' );
 	const gltfLoader = new GLTFLoader( i3dmLoader.manager );
 	gltfLoader.setDRACOLoader( dracoLoader );
 	i3dmLoader.manager.addHandler( /\.gltf$/, gltfLoader );
